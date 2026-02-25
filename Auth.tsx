@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Download, Loader2 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { UserProfile, UserRole, ServiceType, StoredAccount } from './types.ts';
@@ -11,6 +12,7 @@ interface AuthProps {
 }
 
 export const USER_REGISTRY_KEY = 'MYGAAV_USER_REGISTRY';
+const OFFICER_KEYS_KEY = 'MYGAAV_OFFICER_KEYS';
 const COLORS = ['bg-emerald-600', 'bg-indigo-600', 'bg-amber-600', 'bg-rose-600', 'bg-blue-600', 'bg-orange-600'];
 
 const SYSTEM_ADMINS: Record<string, { name: string, dept: ServiceType, pass: string, icon: any, color: string, village: string, subDist: string }> = {
@@ -51,13 +53,67 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     electricityNo: '',
     gasId: '',
     chavdiNo: '',
-    healthId: ''
+    healthId: '',
+    officerKey: ''
   });
 
   const [error, setError] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
+  const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
 
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
+
+  const generateOfficerKeys = () => {
+    setIsGeneratingKeys(true);
+    setTimeout(() => {
+      const keys = new Set<string>();
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      while (keys.size < 100000) {
+        let key = '';
+        for (let i = 0; i < 8; i++) {
+          key += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        keys.add(key);
+      }
+      const keyArray = Array.from(keys);
+      localStorage.setItem(OFFICER_KEYS_KEY, JSON.stringify(keyArray));
+      
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("MyGaav Field Officer Access Keys", 20, 20);
+      doc.setFontSize(10);
+      doc.text("Total Keys: 100,000 (Showing first 5000 in this PDF)", 20, 30);
+      
+      let y = 40;
+      let x = 20;
+      for (let i = 0; i < 5000; i++) {
+        doc.text(keyArray[i], x, y);
+        y += 5;
+        if (y > 280) {
+          y = 40;
+          x += 35;
+          if (x > 180) {
+            doc.addPage();
+            x = 20;
+          }
+        }
+      }
+      doc.save("officer_keys.pdf");
+      setIsGeneratingKeys(false);
+      alert("1 Lakh keys generated and stored. PDF with first 5000 keys downloaded.");
+    }, 100);
+  };
+
+  const validateOfficerKey = (key: string) => {
+    const stored = localStorage.getItem(OFFICER_KEYS_KEY);
+    if (!stored) return false;
+    try {
+      const keys = JSON.parse(stored) as string[];
+      return keys.includes(key.toUpperCase());
+    } catch (e) {
+      return false;
+    }
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem(USER_REGISTRY_KEY);
@@ -73,38 +129,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handleStateChange = (state: string) => {
     const districts = (INDIA_LOCATIONS.districts as any)[state] || [];
     const firstDist = districts[0] || '';
-    const subDists = (INDIA_LOCATIONS.subDistricts as any)[firstDist] || [];
-    const firstSub = subDists[0] || '';
-    const vills = (INDIA_LOCATIONS.villages as any)[firstSub] || INDIA_LOCATIONS.villages.default;
     
     setFormData({
       ...formData,
       state,
       district: firstDist,
-      subDistrict: firstSub,
-      village: vills[0] || ''
+      subDistrict: '',
+      village: ''
     });
   };
 
   const handleDistrictChange = (district: string) => {
-    const subDists = (INDIA_LOCATIONS.subDistricts as any)[district] || [];
-    const firstSub = subDists[0] || '';
-    const vills = (INDIA_LOCATIONS.villages as any)[firstSub] || INDIA_LOCATIONS.villages.default;
-
     setFormData({
       ...formData,
       district,
-      subDistrict: firstSub,
-      village: vills[0] || ''
-    });
-  };
-
-  const handleSubDistrictChange = (subDistrict: string) => {
-    const vills = (INDIA_LOCATIONS.villages as any)[subDistrict] || INDIA_LOCATIONS.villages.default;
-    setFormData({
-      ...formData,
-      subDistrict,
-      village: vills[0] || ''
+      subDistrict: '',
+      village: ''
     });
   };
 
@@ -166,6 +206,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       (role === 'user' || a.department === formData.department)
     );
 
+    if (!isLogin && role === 'admin') {
+      if (!formData.officerKey) {
+        setError('Officer Access Key is required');
+        return;
+      }
+      if (!validateOfficerKey(formData.officerKey)) {
+        setError('Invalid Officer Access Key');
+        return;
+      }
+    }
+
     if (isLogin) {
       if (match && match.password === formData.password) {
         onLogin(match);
@@ -207,8 +258,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   const currentDistricts = (INDIA_LOCATIONS.districts as any)[formData.state] || [];
-  const currentSubDistricts = (INDIA_LOCATIONS.subDistricts as any)[formData.district] || [];
-  const currentVillages = (INDIA_LOCATIONS.villages as any)[formData.subDistrict] || INDIA_LOCATIONS.villages.default;
 
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
@@ -278,6 +327,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               </button>
             </div>
 
+            {!isLogin && role === 'admin' && (
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Officer Access Key</label>
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
+                  <Key size={18} className="text-indigo-600" />
+                  <input required placeholder="Enter 8-Character Key" className="bg-transparent outline-none text-sm w-full font-black text-slate-800 uppercase" maxLength={8} value={formData.officerKey} onChange={e => setFormData({...formData, officerKey: e.target.value})} />
+                </div>
+              </div>
+            )}
+
             {!isLogin && (
               <div className="space-y-4 pt-4">
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('villageConnectivity')}</h3>
@@ -296,15 +355,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   </div>
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                     <Building2 size={18} className="text-slate-400" />
-                    <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict} onChange={e => handleSubDistrictChange(e.target.value)}>
-                      {currentSubDistricts.length > 0 ? currentSubDistricts.map((sd: string) => <option key={sd} value={sd}>{sd}</option>) : <option value="">{t('taluka')}</option>}
-                    </select>
+                    <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
                   </div>
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                     <MapPin size={18} className="text-slate-400" />
-                    <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village} onChange={e => setFormData({...formData, village: e.target.value})}>
-                      {currentVillages.length > 0 ? currentVillages.map((v: string) => <option key={v} value={v}>{v}</option>) : <option value="">{t('village')}</option>}
-                    </select>
+                    <input required placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village} onChange={e => setFormData({...formData, village: e.target.value})} />
                   </div>
                 </div>
 
@@ -349,6 +404,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               {isLogin ? t('signInSecurely') : t('createAccount')}
             </button>
           </form>
+          <div className="mt-8 pt-8 border-t border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">Internal Tools</p>
+            <button 
+              type="button" 
+              onClick={generateOfficerKeys}
+              disabled={isGeneratingKeys}
+              className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-100 transition-all disabled:opacity-50"
+            >
+              {isGeneratingKeys ? <Loader2 className="animate-spin" size={14} /> : <Download size={14} />}
+              {isGeneratingKeys ? 'Generating 1 Lakh Keys...' : 'Generate & Download Officer Keys (PDF)'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
