@@ -1,0 +1,8 @@
+{
+  "name": "MyGaav - Digital Village Hub",
+  "description": "A comprehensive mobile-first platform for village residents to access Gram Panchayat services, utilities, health resources, and AI-powered government scheme assistance.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
