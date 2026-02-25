@@ -8,12 +8,12 @@ import ServiceRequestsView from './components/ServiceRequestsView.tsx';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import ServiceDetail from './components/ServiceDetail.tsx';
 import NotificationCenter from './components/NotificationCenter.tsx';
-import PaymentModal from './components/PaymentModal.tsx';
 import CertificateForm from './components/CertificateForm.tsx';
 import NOCForm from './components/NOCForm.tsx';
 import ChavdiForm from './components/ChavdiForm.tsx';
 import ElectricityForm from './components/ElectricityForm.tsx';
 import GasForm from './components/GasForm.tsx';
+import HealthForm from './components/HealthForm.tsx';
 import NeedHelpForm from './components/NeedHelpForm.tsx';
 import BusinessDirectory from './components/BusinessDirectory.tsx';
 import OnboardingTour from './components/OnboardingTour.tsx';
@@ -41,7 +41,6 @@ const App: React.FC = () => {
   
   const [activeServiceId, setActiveServiceId] = useState<ServiceType | null>(null);
   const [activePortalIdx, setActivePortalIdx] = useState<number | undefined>(undefined);
-  const [activeBill, setActiveBill] = useState<Bill | null>(null);
   
   // Application Data States
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -222,15 +221,6 @@ const App: React.FC = () => {
     setNotifications(prev => [n, ...prev]);
   };
 
-  const handlePaymentSuccess = (txn: Transaction) => {
-    if (!user) return;
-    const scopedTxn = { ...txn, village: user.village, subDistrict: user.subDistrict };
-    setTransactions(prev => [scopedTxn, ...prev]);
-    setBills(prev => prev.map(b => b.id === txn.billId ? { ...b, status: 'Paid' } : b));
-    setActiveBill(null);
-    addNotification('Payment Success', `Receipt for ₹${txn.amount} generated successfully.`, 'success');
-  };
-
   const handleUpdateBusinesses = (biz: LocalBusiness[]) => {
     setBusinesses(biz);
     addNotification('Directory Updated', 'Local business registry has been updated.', 'info');
@@ -296,7 +286,6 @@ const App: React.FC = () => {
                 onSetLang={setLanguage} 
                 onSelectService={(id) => { setActiveServiceId(id); setCurrentView('service-detail'); }} 
                 onOpenNotifications={() => setCurrentView('notifications')} 
-                onPayBill={setActiveBill} 
                 hasUnread={notifications.some(n => !n.read)} 
               />
             )}
@@ -319,7 +308,6 @@ const App: React.FC = () => {
                 onBack={() => setCurrentView('dashboard')} 
                 onAskAI={() => setCurrentView('assistant')} 
                 onRaiseRequest={(idx) => { setActivePortalIdx(idx); setCurrentView('form'); }}
-                onPayBill={setActiveBill} 
               />
             )}
 
@@ -347,6 +335,13 @@ const App: React.FC = () => {
                    <ElectricityForm lang={language} onBack={() => setCurrentView('service-detail')} onSubmit={handleNewRequest} />
                 ) : activeServiceId === ServiceType.GAS ? (
                    <GasForm lang={language} onBack={() => setCurrentView('service-detail')} onSubmit={handleNewRequest} />
+                ) : activeServiceId === ServiceType.HEALTH ? (
+                   <HealthForm 
+                     lang={language} 
+                     portalIdx={activePortalIdx || 0} 
+                     onBack={() => setCurrentView('service-detail')} 
+                     onSubmit={handleNewRequest} 
+                   />
                 ) : null
               )
             )}
@@ -445,21 +440,6 @@ const App: React.FC = () => {
             <span className="text-[8px] font-black uppercase tracking-tighter">{t('about')}</span>
           </button>
         </nav>
-      )}
-
-      {activeBill && (
-        <PaymentModal 
-          bill={activeBill} 
-          userName={user?.name || 'User'} 
-          lang={language} 
-          onClose={() => setActiveBill(null)} 
-          onSuccess={handlePaymentSuccess} 
-          onFailure={(txn) => {
-            setTransactions(prev => [{ ...txn, village: user.village, subDistrict: user.subDistrict }, ...prev]);
-            setActiveBill(null);
-            addNotification('Payment Failed', 'Verification timed out.', 'alert');
-          }} 
-        />
       )}
 
       {showOnboarding && <OnboardingTour lang={language} onComplete={handleOnboardingComplete} />}

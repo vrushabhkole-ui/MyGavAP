@@ -50,7 +50,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     gpId: '',
     electricityNo: '',
     gasId: '',
-    chavdiNo: ''
+    chavdiNo: '',
+    healthId: ''
   });
 
   const [error, setError] = useState('');
@@ -323,6 +324,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                     <FileText size={16} className="text-slate-400" />
                     <input placeholder={t('chavdiAccountNo')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.chavdiNo} onChange={e => setFormData({...formData, chavdiNo: e.target.value})} />
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                    <HeartPulse size={16} className="text-slate-400" />
+                    <input placeholder={t('healthId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.healthId} onChange={e => setFormData({...formData, healthId: e.target.value})} />
                   </div>
                 </div>
 

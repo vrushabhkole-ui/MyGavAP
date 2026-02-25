@@ -16,10 +16,9 @@ interface ServiceDetailProps {
   onBack: () => void;
   onAskAI: () => void;
   onRaiseRequest: (portalIdx?: number) => void;
-  onPayBill: (bill: Bill) => void;
 }
 
-const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; onPay: () => void; lang: Language }> = ({ bill, onClose, onPay, lang }) => {
+const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; lang: Language }> = ({ bill, onClose, lang }) => {
   const isPaid = bill.status === 'Paid';
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
   
@@ -91,12 +90,9 @@ const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; onPay: () => 
                 <Download size={18} /> {t('receipt')}
               </button>
             ) : (
-              <button 
-                onClick={() => { onPay(); onClose(); }}
-                className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-100 active:scale-95 transition-all flex items-center gap-2"
-              >
-                <CreditCard size={18} /> {t('payNow')}
-              </button>
+              <div className="bg-rose-50 text-rose-600 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-center">
+                {t('paymentPending')}
+              </div>
             )}
           </div>
         </div>
@@ -105,7 +101,7 @@ const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; onPay: () => 
   );
 };
 
-const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onBack, onAskAI, onRaiseRequest, onPayBill }) => {
+const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onBack, onAskAI, onRaiseRequest }) => {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [showTaxCenter, setShowTaxCenter] = useState(false);
   
@@ -258,7 +254,9 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
             {activeUnpaidBills.length > 0 && (
               <div className="space-y-3">
                  <div className="flex items-center justify-between px-2">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('pendingBills')}</h3>
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {service.id === ServiceType.ELECTRICITY ? t('payMonthlyBill') : t('pendingBills')}
+                    </h3>
                     <span className="text-[10px] font-black text-rose-500 uppercase flex items-center gap-1">
                        <AlertCircle size={12} /> {activeUnpaidBills.length} {t('totalPending')}
                     </span>
@@ -355,7 +353,6 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
           bill={selectedBill} 
           lang={lang}
           onClose={() => setSelectedBill(null)} 
-          onPay={() => onPayBill(selectedBill)} 
         />
       )}
     </div>

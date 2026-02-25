@@ -93,6 +93,8 @@ export const DICTIONARY: Record<string, Record<Language, string>> = {
   mainPortals: { en: 'Main Service Portals', hi: 'मुख्य सेवा पोर्टल', mr: 'मुख्य सेवा पोर्टल' },
   enterPortal: { en: 'Enter Portal', hi: 'पोर्टल में प्रवेश करें', mr: 'पोर्टल उघडा' },
   payNow: { en: 'Pay Now', hi: 'अभी भुगतान करें', mr: 'आता भरा' },
+  payMonthlyBill: { en: 'Pay Monthly Bill', hi: 'मासिक बिल का भुगतान करें', mr: 'मासिक बिल भरा' },
+  paymentPending: { en: 'Payment Pending', hi: 'भुगतान लंबित', mr: 'पेमेंट प्रलंबित' },
   activeAssessments: { en: 'Active Assessments', hi: 'सक्रिय आकलन', mr: 'सक्रिय मूल्यांकन' },
   recentSettlements: { en: 'Recent Settlements', hi: 'हालिया निपटान', mr: 'अलीकडील भरणा' },
   availablePortals: { en: 'Available Portals', hi: 'उपलब्ध पोर्टल', mr: 'उपलब्ध सेवा' },
@@ -131,6 +133,7 @@ export const DICTIONARY: Record<string, Record<Language, string>> = {
   electricityConsumerNo: { en: 'Electricity Consumer No', hi: 'बिजली उपभोक्ता संख्या', mr: 'वीज ग्राहक क्रमांक' },
   gasConsumerId: { en: 'Gas Consumer ID', hi: 'गैस उपभोक्ता आईडी', mr: 'गॅस ग्राहक आयडी' },
   chavdiAccountNo: { en: 'Chavdi Account No', hi: 'चावड़ी खाता संख्या', mr: 'चावडी खाते क्रमांक' },
+  healthId: { en: 'Health ID / ABHA ID', hi: 'स्वास्थ्य आईडी / आभा आईडी', mr: 'आरोग्य आयडी / आभा आयडी' },
   selectDepartment: { en: 'Select Your Department', hi: 'अपने विभाग का चयन करें', mr: 'आपला विभाग निवडा' }
 };
 
@@ -190,6 +193,16 @@ export const SERVICES: ServiceInfo[] = [
     details: [
       { en: "Refill Booking", hi: "रीफिल बुकिंग", mr: "रीफिल बुकिंग" },
       { en: "New Connection", hi: "नया कनेक्शन", mr: "नवीन कनेक्शन" }
+    ]
+  },
+  {
+    id: ServiceType.HEALTH,
+    title: { en: "Health Services", hi: "स्वास्थ्य सेवाएँ", mr: "आरोग्य सेवा" },
+    icon: "HeartPulse",
+    color: "bg-rose-500",
+    description: { en: "Public Health & Wellness", hi: "जन स्वास्थ्य", mr: "सार्वजनिक आरोग्य" },
+    details: [
+      { en: "OPD Registration", hi: "ओपीडी पंजीकरण", mr: "ओपीडी नोंदणी" }
     ]
   }
 ];

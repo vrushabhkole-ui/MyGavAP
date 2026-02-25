@@ -13,7 +13,6 @@ interface DashboardProps {
   onSetLang: (lang: Language) => void;
   onSelectService: (id: ServiceType) => void;
   onOpenNotifications: () => void;
-  onPayBill: (bill: Bill) => void;
   hasUnread: boolean;
 }
 
@@ -63,16 +62,20 @@ const NoticeDetailModal: React.FC<{ notice: VillageNotice; onClose: () => void; 
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSetLang, onSelectService, onOpenNotifications, onPayBill, hasUnread }) => {
+const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSetLang, onSelectService, onOpenNotifications, hasUnread }) => {
   const [selectedNotice, setSelectedNotice] = useState<VillageNotice | null>(null);
   const [isWeatherExpanded, setIsWeatherExpanded] = useState(false);
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
-  const unpaidBills = bills.filter(b => b.status === 'Unpaid');
+  const unpaidBills = bills.filter(b => b.status === 'Unpaid' && b.type !== 'Electricity');
+
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + 
+                        now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
   const weatherForecast = [
     { day: 'Tomorrow', temp: '31°C', icon: <Sun size={14} className="text-amber-400" /> },
-    { day: 'Wed', temp: '29°C', icon: <Droplets size={14} className="text-blue-400" /> },
-    { day: 'Thu', temp: '30°C', icon: <Sun size={14} className="text-amber-400" /> },
+    { day: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { weekday: 'short' }), temp: '29°C', icon: <Droplets size={14} className="text-blue-400" /> },
+    { day: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { weekday: 'short' }), temp: '30°C', icon: <Sun size={14} className="text-amber-400" /> },
   ];
 
   return (
@@ -109,8 +112,8 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSet
             <div className="relative z-10 flex justify-between items-start">
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
-                   <h3 className="text-3xl font-black">32°C</h3>
-                   <span className="text-xs font-bold opacity-60">Sunny</span>
+                   <h3 className="text-3xl font-black">28°C</h3>
+                   <span className="text-xs font-bold opacity-60">Clear Sky</span>
                 </div>
                 <div className="flex items-center gap-1 opacity-80">
                   <MapPin size={10} />
@@ -121,7 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSet
                 <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/10 mb-2">
                   <Sun size={20} className="text-amber-300" />
                 </div>
-                <p className="text-[9px] uppercase font-black opacity-60 tracking-widest">15 Aug, 10:00 AM</p>
+                <p className="text-[9px] uppercase font-black opacity-60 tracking-widest">{formattedDate}</p>
               </div>
             </div>
 
@@ -219,12 +222,6 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSet
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">₹{bill.amount.toLocaleString('en-IN')}</h3>
                   {bill.description && <p className="text-[10px] font-bold text-slate-400 mt-2 line-clamp-2 leading-relaxed italic">"{bill.description}"</p>}
-                  <button 
-                    onClick={() => onPayBill(bill)}
-                    className="mt-6 w-full bg-slate-900 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-slate-100"
-                  >
-                    <CreditCard size={14} /> {t('payNow')}
-                  </button>
                 </div>
               ))}
             </div>
