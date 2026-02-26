@@ -65,6 +65,7 @@ const NoticeDetailModal: React.FC<{ notice: VillageNotice; onClose: () => void; 
 const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSetLang, onSelectService, onOpenNotifications, hasUnread }) => {
   const [selectedNotice, setSelectedNotice] = useState<VillageNotice | null>(null);
   const [isWeatherExpanded, setIsWeatherExpanded] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
   const unpaidBills = bills.filter(b => b.status === 'Unpaid' && b.type !== 'Electricity');
 
@@ -229,13 +230,29 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSet
         )}
 
         <div className="px-5 mt-8">
-          <h2 className="text-base font-black text-slate-800 mb-5 tracking-tight uppercase tracking-widest text-[11px] px-1">{t('mainPortals')}</h2>
+          <div className="flex items-center justify-between mb-5 px-1">
+            <h2 className="text-base font-black text-slate-800 tracking-tight uppercase tracking-widest text-[11px]">{t('mainPortals')}</h2>
+            <button 
+              onClick={() => setShowAllServices(!showAllServices)}
+              className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors"
+            >
+              {showAllServices ? (
+                <>
+                  {t('lessServices')} <ChevronUp size={12} strokeWidth={3} />
+                </>
+              ) : (
+                <>
+                  {t('moreServices')} <ChevronDown size={12} strokeWidth={3} />
+                </>
+              )}
+            </button>
+          </div>
           <div className="grid grid-cols-1 gap-4">
-            {SERVICES.map((service) => (
+            {(showAllServices ? SERVICES : SERVICES.slice(0, 3)).map((service) => (
               <button
                 key={service.id}
                 onClick={() => onSelectService(service.id)}
-                className="bg-white p-6 rounded-[36px] shadow-sm border border-slate-100 text-left flex items-center gap-5 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-50 transition-all active:scale-[0.98] group"
+                className="bg-white p-6 rounded-[36px] shadow-sm border border-slate-100 text-left flex items-center gap-5 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-50 transition-all active:scale-[0.98] group animate-in fade-in slide-in-from-bottom-2 duration-300"
               >
                 <div className={`${service.color} w-16 h-16 rounded-[24px] flex items-center justify-center text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform`}>
                   {getIcon(service.icon, 28)}

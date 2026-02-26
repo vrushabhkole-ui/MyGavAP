@@ -45,7 +45,9 @@ const AboutView: React.FC = () => {
         </div>
 
         <div className="pt-10 flex flex-col items-center space-y-6">
-           <MaharashtraEmblem size="md" theme="dark" />
+           <div className="bg-white p-4 rounded-full shadow-md">
+              <MaharashtraEmblem size="lg" theme="dark" />
+           </div>
            <div className="max-w-[240px]">
              <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest">
                Empowering rural communities through decentralized digital governance.

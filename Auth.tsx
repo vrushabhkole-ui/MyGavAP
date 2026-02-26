@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Download, Loader2 } from 'lucide-react';
-import { jsPDF } from 'jspdf';
+import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key } from 'lucide-react';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { UserProfile, UserRole, ServiceType, StoredAccount } from './types.ts';
@@ -14,6 +13,14 @@ interface AuthProps {
 export const USER_REGISTRY_KEY = 'MYGAAV_USER_REGISTRY';
 const OFFICER_KEYS_KEY = 'MYGAAV_OFFICER_KEYS';
 const COLORS = ['bg-emerald-600', 'bg-indigo-600', 'bg-amber-600', 'bg-rose-600', 'bg-blue-600', 'bg-orange-600'];
+
+// Permanent Officer Keys saved in App Data
+const PERMANENT_OFFICER_KEYS = [
+  'OFFICER01', 'OFFICER02', 'OFFICER03', 'OFFICER04', 'OFFICER05',
+  'MAHA7788', 'PUNE9900', 'GAAV1122', 'FIELD556', 'ADMIN889',
+  'KEY2024X', 'KEY2025Y', 'VILLAGE1', 'GAAVHUB9',
+  'K8J2M4P9', 'L7N3Q5R1', 'B6V9X2Z4', 'H1G5F8D3', 'S0A2W4E6'
+];
 
 const SYSTEM_ADMINS: Record<string, { name: string, dept: ServiceType, pass: string, icon: any, color: string, village: string, subDist: string }> = {
   'gp@mygaav.com': { name: 'GP Officer', dept: ServiceType.GRAMPANCHAYAT, pass: 'admin123', icon: Building, color: 'bg-emerald-600', village: 'Sukhawadi', subDist: 'Haveli' },
@@ -59,63 +66,46 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   const [error, setError] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
-  const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
 
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
 
-  const generateOfficerKeys = () => {
-    setIsGeneratingKeys(true);
-    setTimeout(() => {
-      const keys = new Set<string>();
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      while (keys.size < 100000) {
-        let key = '';
-        for (let i = 0; i < 8; i++) {
-          key += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        keys.add(key);
-      }
-      const keyArray = Array.from(keys);
-      localStorage.setItem(OFFICER_KEYS_KEY, JSON.stringify(keyArray));
-      
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text("MyGaav Field Officer Access Keys", 20, 20);
-      doc.setFontSize(10);
-      doc.text("Total Keys: 100,000 (Showing first 5000 in this PDF)", 20, 30);
-      
-      let y = 40;
-      let x = 20;
-      for (let i = 0; i < 5000; i++) {
-        doc.text(keyArray[i], x, y);
-        y += 5;
-        if (y > 280) {
-          y = 40;
-          x += 35;
-          if (x > 180) {
-            doc.addPage();
-            x = 20;
-          }
-        }
-      }
-      doc.save("officer_keys.pdf");
-      setIsGeneratingKeys(false);
-      alert("1 Lakh keys generated and stored. PDF with first 5000 keys downloaded.");
-    }, 100);
-  };
-
   const validateOfficerKey = (key: string) => {
+    const upperKey = key.toUpperCase().trim();
+    
+    // 1. Check Permanent Keys first (Always work)
+    if (PERMANENT_OFFICER_KEYS.includes(upperKey)) return true;
+
+    // 2. Check Generated Keys in LocalStorage
     const stored = localStorage.getItem(OFFICER_KEYS_KEY);
     if (!stored) return false;
     try {
       const keys = JSON.parse(stored) as string[];
-      return keys.includes(key.toUpperCase());
+      // Use a Set for faster lookup if the list is large
+      return new Set(keys).has(upperKey);
     } catch (e) {
       return false;
     }
   };
 
   useEffect(() => {
+    // Silent key generation if missing (moved to timeout to prevent UI freeze)
+    const existingKeys = localStorage.getItem(OFFICER_KEYS_KEY);
+    if (!existingKeys) {
+      setTimeout(() => {
+        const keys = new Set<string>();
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        while (keys.size < 100000) {
+          let key = '';
+          for (let i = 0; i < 8; i++) {
+            key += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          keys.add(key);
+        }
+        localStorage.setItem(OFFICER_KEYS_KEY, JSON.stringify(Array.from(keys)));
+        console.log("1 Lakh Officer keys generated and saved to LocalStorage.");
+      }, 1000);
+    }
+
     const stored = localStorage.getItem(USER_REGISTRY_KEY);
     if (stored) {
       try { 
@@ -234,6 +224,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         return;
       }
       setError('Invalid credentials.');
+      return;
+    }
+
+    // Check if email or mobile already exists in the registry
+    const existingRegistry = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+    if (existingRegistry.some((a: any) => a.email.toLowerCase() === emailKey)) {
+      setError('This email is already registered. Please login instead.');
+      return;
+    }
+    if (existingRegistry.some((a: any) => a.mobile === formData.mobile)) {
+      setError('This mobile number is already registered. Please use a different one.');
       return;
     }
 
@@ -404,18 +405,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               {isLogin ? t('signInSecurely') : t('createAccount')}
             </button>
           </form>
-          <div className="mt-8 pt-8 border-t border-slate-100">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">Internal Tools</p>
-            <button 
-              type="button" 
-              onClick={generateOfficerKeys}
-              disabled={isGeneratingKeys}
-              className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-100 transition-all disabled:opacity-50"
-            >
-              {isGeneratingKeys ? <Loader2 className="animate-spin" size={14} /> : <Download size={14} />}
-              {isGeneratingKeys ? 'Generating 1 Lakh Keys...' : 'Generate & Download Officer Keys (PDF)'}
-            </button>
-          </div>
         </div>
       </div>
     </div>

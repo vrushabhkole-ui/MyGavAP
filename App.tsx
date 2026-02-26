@@ -271,6 +271,7 @@ const App: React.FC = () => {
             onUpdateBusinesses={handleUpdateBusinesses}
             onUpdateStatus={updateRequestStatus} 
             onIssueBill={(b) => setBills(prev => [{ ...b, village: user.village, subDistrict: user.subDistrict }, ...prev])} 
+            onDeleteBill={(id) => setBills(prev => prev.filter(b => b.id !== id))}
             onIssueNotice={handleIssueNotice} 
             onDeleteNotice={handleDeleteNotice}
             onLogout={handleLogout}

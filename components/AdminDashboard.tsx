@@ -22,6 +22,7 @@ interface AdminDashboardProps {
   onUpdateBusinesses: (biz: LocalBusiness[]) => void;
   onUpdateStatus: (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => void;
   onIssueBill: (bill: Bill) => void;
+  onDeleteBill: (id: string) => void;
   onIssueNotice: (notice: VillageNotice) => void;
   onDeleteNotice: (id: string) => void;
   onLogout: () => void;
@@ -259,7 +260,7 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   lang, user, requests, residents, bills, notices, transactions, businesses, onUpdateBusinesses,
-  onUpdateStatus, onIssueBill, onIssueNotice, onDeleteNotice, onLogout 
+  onUpdateStatus, onIssueBill, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
 }) => {
   const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses'>('requests');
   const [selectedResident, setSelectedResident] = useState<UserProfile | null>(null);
@@ -635,7 +636,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">{b.userId} • {b.status}</p>
                                </div>
                             </div>
-                            <span className={`font-black text-[12px] ${b.status === 'Paid' ? 'text-emerald-600' : 'text-slate-800'}`}>₹{b.amount}</span>
+                            <div className="flex items-center gap-2">
+                               <span className={`font-black text-[12px] ${b.status === 'Paid' ? 'text-emerald-600' : 'text-slate-800'}`}>₹{b.amount}</span>
+                               <button 
+                                 onClick={() => onDeleteBill(b.id)}
+                                 className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                 title="Remove Bill"
+                               >
+                                  <Trash2 size={14}/>
+                               </button>
+                            </div>
                          </div>
                       ))
                    )}

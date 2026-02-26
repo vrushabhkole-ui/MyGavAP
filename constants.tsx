@@ -228,7 +228,9 @@ export const DICTIONARY: Record<string, Record<Language, string>> = {
   gasConsumerId: { en: 'Gas Consumer ID', hi: 'गैस उपभोक्ता आईडी', mr: 'गॅस ग्राहक आयडी' },
   chavdiAccountNo: { en: 'Chavdi Account No', hi: 'चावड़ी खाता संख्या', mr: 'चावडी खाते क्रमांक' },
   healthId: { en: 'Health ID / ABHA ID', hi: 'स्वास्थ्य आईडी / आभा आईडी', mr: 'आरोग्य आयडी / आभा आयडी' },
-  selectDepartment: { en: 'Select Your Department', hi: 'अपने विभाग का चयन करें', mr: 'आपला विभाग निवडा' }
+  selectDepartment: { en: 'Select Your Department', hi: 'अपने विभाग का चयन करें', mr: 'आपला विभाग निवडा' },
+  moreServices: { en: 'More Services', hi: 'अधिक सेवाएँ', mr: 'अधिक सेवा' },
+  lessServices: { en: 'Show Less', hi: 'कम दिखाएं', mr: 'कमी दाखवा' }
 };
 
 export const SERVICES: ServiceInfo[] = [
