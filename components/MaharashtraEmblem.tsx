@@ -19,15 +19,15 @@ const MaharashtraEmblem: React.FC<MaharashtraEmblemProps> = ({ size = 'md', them
 
   return (
     <div className={`flex ${size === 'sm' ? 'flex-row' : 'flex-col'} items-center gap-4`}>
-      <div className={`${dimensions[size]} flex-shrink-0 flex items-center justify-center relative bg-white rounded-full p-2 shadow-sm border border-slate-100`}>
+      <div className={`${dimensions[size]} flex-shrink-0 flex items-center justify-center relative bg-white rounded-2xl p-1 shadow-sm border border-slate-200`}>
         <img 
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Seal_of_Maharashtra.svg/512px-Seal_of_Maharashtra.svg.png" 
+          src="https://upload.wikimedia.org/wikipedia/commons/e/e3/Seal_of_Maharashtra.svg" 
           alt="Government of Maharashtra"
-          className="w-full h-full object-contain relative z-10"
+          className="w-full h-full object-contain relative z-10 filter grayscale brightness-0"
           referrerPolicy="no-referrer"
           onError={(e) => {
-            // Fallback to a generic emblem if the official one fails to load
-            (e.target as HTMLImageElement).src = "https://picsum.photos/seed/maharashtra/200/200";
+            // Fallback to a text-based emblem if image fails
+            (e.target as HTMLImageElement).style.display = 'none';
           }}
         />
         <div className="absolute inset-0 flex items-center justify-center opacity-5">

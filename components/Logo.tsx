@@ -16,21 +16,13 @@ const Logo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
 
   return (
     <div className="flex items-center gap-2.5">
-      <div className={`${dimensions[size]} bg-emerald-600 rounded-lg flex items-center justify-center shadow-md shadow-emerald-100`}>
-        <svg 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="white" 
-          strokeWidth="2.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          className="w-3/5 h-3/5"
-        >
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-          <path d="M12 2v20" className="opacity-40" />
-          <circle cx="12" cy="7" r="1.5" fill="white" stroke="none" />
-        </svg>
+      <div className={`${dimensions[size]} bg-white rounded-lg flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden`}>
+        <img 
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Seal_of_Maharashtra.svg/512px-Seal_of_Maharashtra.svg.png" 
+          alt="Maharashtra Seal"
+          className="w-4/5 h-4/5 object-contain"
+          referrerPolicy="no-referrer"
+        />
       </div>
       <span className={`${textSizes[size]} font-extrabold tracking-tight text-slate-800`}>
         My<span className="text-emerald-600">Gaav</span>

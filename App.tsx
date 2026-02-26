@@ -247,7 +247,7 @@ const App: React.FC = () => {
   const userNotices = notices.filter(n => n.village === user.village && n.subDistrict === user.subDistrict);
 
   return (
-    <div className="max-w-md mx-auto bg-slate-50 h-screen relative shadow-2xl overflow-hidden flex flex-col">
+    <div className="max-w-md mx-auto bg-slate-50 h-[100dvh] relative shadow-2xl overflow-hidden flex flex-col">
       <main className="flex-1 overflow-hidden relative">
         {isViewLoading && (
           <div className="absolute inset-0 z-[60] bg-slate-50/80 backdrop-blur-[2px] flex flex-col items-center justify-center animate-in fade-in duration-300">
@@ -419,7 +419,7 @@ const App: React.FC = () => {
       </main>
 
       {user.role === 'user' && (
-        <nav className="bg-white border-t border-slate-100 flex items-center justify-around py-4 px-3 rounded-t-[32px] shadow-lg relative z-40">
+        <nav className="bg-white border-t border-slate-100 flex items-center justify-around py-4 px-3 rounded-t-[32px] shadow-lg relative z-40 flex-shrink-0">
           <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center gap-1.5 transition-all ${currentView === 'dashboard' ? 'text-emerald-600 scale-110' : 'text-slate-300'}`}>
             <Home size={22} strokeWidth={currentView === 'dashboard' ? 3 : 2} />
             <span className="text-[8px] font-black uppercase tracking-tighter">{t('home')}</span>

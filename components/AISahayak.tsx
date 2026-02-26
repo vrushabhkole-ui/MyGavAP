@@ -68,7 +68,7 @@ const AISahayak: React.FC<AISahayakProps> = ({ lang }) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 animate-slide-in">
+    <div className="flex flex-col h-full bg-slate-50 animate-slide-in">
       <div className="p-4 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
         <div className="flex items-center gap-2 text-emerald-800 text-sm font-medium">
           <Info size={16} />
