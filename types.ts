@@ -107,6 +107,7 @@ export interface UserProfile {
   role: UserRole;
   department?: ServiceType;
   joinedAt?: string;
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface AppNotification {

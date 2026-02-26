@@ -20,6 +20,7 @@ interface AdminDashboardProps {
   transactions: Transaction[];
   businesses: LocalBusiness[];
   onUpdateBusinesses: (biz: LocalBusiness[]) => void;
+  onUpdateResidents: (residents: UserProfile[]) => void;
   onUpdateStatus: (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => void;
   onIssueBill: (bill: Bill) => void;
   onDeleteBill: (id: string) => void;
@@ -243,6 +244,12 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
                 <span className="text-slate-400">Account Role</span>
                 <span className="text-slate-700 capitalize">{resident.role}</span>
               </div>
+              <div className="flex justify-between items-center text-[11px] font-bold px-1">
+                <span className="text-slate-400">Status</span>
+                <span className={`capitalize ${resident.status === 'approved' ? 'text-emerald-600' : resident.status === 'pending' ? 'text-amber-600' : 'text-rose-600'}`}>
+                  {resident.status || 'Approved'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -260,9 +267,9 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   lang, user, requests, residents, bills, notices, transactions, businesses, onUpdateBusinesses,
-  onUpdateStatus, onIssueBill, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
+  onUpdateResidents, onUpdateStatus, onIssueBill, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
 }) => {
-  const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses' | 'approvals'>('requests');
   const [selectedResident, setSelectedResident] = useState<UserProfile | null>(null);
   const [processingRequest, setProcessingRequest] = useState<ServiceRequest | null>(null);
   const [noticeData, setNoticeData] = useState({ title: '', content: '', category: 'General' as VillageNotice['category'] });
@@ -411,6 +418,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onUpdateBusinesses(updated);
   };
 
+  const handleApproveUser = (id: string) => {
+    const updated = residents.map(r => r.id === id ? { ...r, status: 'approved' } as UserProfile : r);
+    onUpdateResidents(updated);
+  };
+
+  const handleRejectUser = (id: string) => {
+    const updated = residents.map(r => r.id === id ? { ...r, status: 'rejected' } as UserProfile : r);
+    onUpdateResidents(updated);
+  };
+
   const handleDownloadProof = (proof: FileMetadata) => {
     const link = document.createElement('a');
     link.href = proof.url;
@@ -508,8 +525,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'billing', label: 'Billing', icon: Receipt },
             { id: 'notices', label: 'Notices', icon: Megaphone },
             { id: 'peoples', label: 'Residents', icon: Users },
+            dept === ServiceType.GRAMPANCHAYAT && { id: 'approvals', label: 'Approvals', icon: UserCheck },
             { id: 'history', label: 'History', icon: HistoryIcon }
-          ].map(tab => (
+          ].filter(Boolean).map(tab => (
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)} 
@@ -717,12 +735,80 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                            <h4 className="font-black text-[13px] text-slate-800 truncate">{res.name}</h4>
-                           <p className="text-[9px] font-bold text-slate-400">{res.id}</p>
+                           <div className="flex items-center gap-2">
+                             <p className="text-[9px] font-bold text-slate-400">{res.id}</p>
+                             <span className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded-full ${res.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : res.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
+                               {res.status || 'Approved'}
+                             </span>
+                           </div>
                         </div>
                         <ChevronRight size={16} className="text-slate-200 group-hover:text-slate-400 transition-colors" />
                     </button>
                   ))
                 )}
+             </div>
+          )}
+
+          {activeTab === 'approvals' && (
+             <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pending User Approvals</h3>
+                  <div className="bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full text-[8px] font-black uppercase">
+                    {residents.filter(r => r.village === managedVillage && r.status === 'pending').length} Pending
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {residents.filter(r => r.village === managedVillage && r.status === 'pending').length === 0 ? (
+                    <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
+                       <p className="text-[9px] font-black uppercase tracking-widest">No pending approvals</p>
+                    </div>
+                  ) : (
+                    residents.filter(r => r.village === managedVillage && r.status === 'pending').map(res => (
+                      <div 
+                        key={res.id} 
+                        className="w-full bg-white p-4 rounded-[28px] border border-slate-100 flex flex-col gap-4 shadow-sm"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-slate-400">
+                             {res.name.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                             <h4 className="font-black text-[14px] text-slate-800 truncate">{res.name}</h4>
+                             <p className="text-[10px] font-bold text-slate-400">{res.email}</p>
+                             <p className="text-[8px] font-black text-indigo-600 uppercase tracking-widest mt-1">{res.id}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-slate-50 p-2 rounded-xl">
+                            <p className="text-[7px] font-black text-slate-400 uppercase">Mobile</p>
+                            <p className="text-[10px] font-bold text-slate-700">{res.mobile || 'N/A'}</p>
+                          </div>
+                          <div className="bg-slate-50 p-2 rounded-xl">
+                            <p className="text-[7px] font-black text-slate-400 uppercase">Registered</p>
+                            <p className="text-[10px] font-bold text-slate-700">{res.joinedAt}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                          <button 
+                            onClick={() => handleApproveUser(res.id)}
+                            className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+                          >
+                            <Check size={14} /> Approve
+                          </button>
+                          <button 
+                            onClick={() => handleRejectUser(res.id)}
+                            className="flex-1 bg-rose-50 text-rose-600 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border border-rose-100 active:scale-95 transition-all flex items-center justify-center gap-2"
+                          >
+                            <X size={14} /> Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
              </div>
           )}
 

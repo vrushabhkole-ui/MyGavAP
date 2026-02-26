@@ -162,7 +162,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         subDistrict: 'Haveli',
         village: DEMO_RESIDENT.village,
         role: 'user',
-        joinedAt: 'Demo Account'
+        joinedAt: 'Demo Account',
+        status: 'approved'
       };
       saveToRegistry(profile, DEMO_RESIDENT.pass);
       onLogin(profile);
@@ -178,7 +179,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         village: sys.village,
         role: 'admin',
         department: sys.dept,
-        joinedAt: 'System Config'
+        joinedAt: 'System Config',
+        status: 'approved'
       };
       saveToRegistry(profile, sys.pass);
       onLogin(profile);
@@ -209,6 +211,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
     if (isLogin) {
       if (match && match.password === formData.password) {
+        if (match.role === 'user' && match.status === 'pending') {
+          setError('Your account is pending approval from Grampanchayat. Please try again later.');
+          return;
+        }
+        if (match.role === 'user' && match.status === 'rejected') {
+          setError('Your registration has been rejected. Please contact Grampanchayat.');
+          return;
+        }
         onLogin(match);
         return;
       }
@@ -251,11 +261,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       village: formData.village,
       role,
       department: role === 'admin' ? formData.department : undefined,
-      joinedAt: new Date().toLocaleDateString('en-IN')
+      joinedAt: new Date().toLocaleDateString('en-IN'),
+      status: role === 'admin' ? 'approved' : 'pending'
     };
     
     saveToRegistry(profile, formData.password);
-    onLogin(profile);
+    if (role === 'admin') {
+      onLogin(profile);
+    } else {
+      setError('Registration successful! Your account is now pending approval from Grampanchayat.');
+      setIsLogin(true);
+    }
   };
 
   const currentDistricts = (INDIA_LOCATIONS.districts as any)[formData.state] || [];

@@ -105,7 +105,8 @@ const App: React.FC = () => {
         subDistrict: 'Haveli',
         village: 'Sukhawadi',
         role: 'user',
-        joinedAt: 'System Default'
+        joinedAt: 'System Default',
+        status: 'approved'
       }];
     }
     setResidents(allResidents);
@@ -226,6 +227,21 @@ const App: React.FC = () => {
     addNotification('Directory Updated', 'Local business registry has been updated.', 'info');
   };
 
+  const handleUpdateResidents = (updatedResidents: UserProfile[]) => {
+    setResidents(updatedResidents);
+    const stored = localStorage.getItem(USER_REGISTRY_KEY);
+    if (stored) {
+      try {
+        const allUsers = JSON.parse(stored) as UserProfile[];
+        const newAllUsers = allUsers.map(u => {
+          const found = updatedResidents.find(r => r.id === u.id);
+          return found ? { ...u, ...found } : u;
+        });
+        localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(newAllUsers));
+      } catch (e) { console.error(e); }
+    }
+  };
+
   const handleRegisterBusiness = (biz: Omit<LocalBusiness, 'id' | 'village' | 'subDistrict' | 'status'>) => {
     if (!user) return;
     const newBiz: LocalBusiness = {
@@ -269,6 +285,7 @@ const App: React.FC = () => {
             transactions={transactions}
             businesses={businesses}
             onUpdateBusinesses={handleUpdateBusinesses}
+            onUpdateResidents={handleUpdateResidents}
             onUpdateStatus={updateRequestStatus} 
             onIssueBill={(b) => setBills(prev => [{ ...b, village: user.village, subDistrict: user.subDistrict }, ...prev])} 
             onDeleteBill={(id) => setBills(prev => prev.filter(b => b.id !== id))}
