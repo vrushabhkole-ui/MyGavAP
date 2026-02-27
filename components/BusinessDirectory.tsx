@@ -84,19 +84,19 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
              <ChevronLeft size={24} />
            </button>
            <div className="bg-white/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/20">
-             Local Marketplace
+             {t('localMarketplace')}
            </div>
         </div>
         <div className="space-y-1 mb-8">
-           <h1 className="text-2xl font-black tracking-tight">{lang === 'mr' ? 'स्थानिक व्यवसाय सूची' : lang === 'hi' ? 'स्थानीय व्यापार निर्देशिका' : 'Village Business Hub'}</h1>
-           <p className="text-white/60 text-[10px] font-black uppercase tracking-widest">Explore and support local services</p>
+           <h1 className="text-2xl font-black tracking-tight">{t('villageBusinessHub')}</h1>
+           <p className="text-white/60 text-[10px] font-black uppercase tracking-widest">{t('exploreLocalServices')}</p>
         </div>
         
         <div className="flex items-center gap-3 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 backdrop-blur-md focus-within:bg-white/20 transition-all">
           <Search size={20} className="text-white/60" />
           <input 
             type="text" 
-            placeholder="Search shops, services..." 
+            placeholder={t('searchShops')} 
             className="bg-transparent outline-none text-white text-sm w-full font-bold placeholder:text-white/40"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -110,7 +110,7 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
              onClick={() => setSearch('')}
              className={`flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${!search ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-400 border-slate-100'}`}
            >
-             All
+             {t('all')}
            </button>
            {categories.map(cat => (
              <button 
@@ -127,7 +127,7 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
           {filtered.length === 0 ? (
             <div className="py-20 text-center opacity-30 flex flex-col items-center">
                <Store size={48} className="mb-4" />
-               <p className="text-[10px] font-black uppercase tracking-widest">No matching businesses found</p>
+               <p className="text-[10px] font-black uppercase tracking-widest">{t('noBusinesses')}</p>
             </div>
           ) : (
             filtered.map(business => (
@@ -136,7 +136,7 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
                     <div className="space-y-1">
                        <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{business.category}</span>
                        <h3 className="text-lg font-black text-slate-800 tracking-tight pt-1">{business.name}</h3>
-                       <p className="text-[10px] font-bold text-slate-400">Owner: {business.ownerName}</p>
+                       <p className="text-[10px] font-bold text-slate-400">{t('owner')}: {business.ownerName}</p>
                     </div>
                     <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
                        <Store size={24} />
@@ -151,14 +151,14 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
                     <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3">
                        <Clock size={16} className="text-slate-400" />
                        <div className="flex flex-col">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Hours</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{t('hours')}</span>
                           <span className="text-[10px] font-bold text-slate-700">{business.hours}</span>
                        </div>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3">
                        <Phone size={16} className="text-slate-400" />
                        <div className="flex flex-col">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Contact</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{t('contact')}</span>
                           <span className="text-[10px] font-bold text-slate-700">{business.contact}</span>
                        </div>
                     </div>
@@ -169,7 +169,7 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
                       href={`tel:${business.contact}`}
                       className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
                     >
-                       Call Now
+                       {t('callNow')}
                     </a>
                     <button className="p-3.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                        <MessageSquare size={18} />
@@ -189,8 +189,8 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
                 <Plus size={24} />
              </div>
              <div className="text-center">
-                <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Register Your Business</h4>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">Get listed in the village directory</p>
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">{t('registerBusiness')}</h4>
+                <p className="text-[10px] font-bold text-slate-400 mt-1">{t('getListed')}</p>
              </div>
           </button>
 
@@ -203,7 +203,7 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
             </div>
             <div className="text-left">
               <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-widest">{t('needHelp')}</h3>
-              <p className="text-[9px] text-slate-400 font-bold mt-0.5 leading-tight">Business directory issues</p>
+              <p className="text-[9px] text-slate-400 font-bold mt-0.5 leading-tight">{t('businessIssues')}</p>
             </div>
           </button>
         </div>
@@ -214,8 +214,8 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
           <div className="relative w-full max-w-sm bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
             <header className="px-8 pt-8 pb-4 flex justify-between items-start">
               <div className="space-y-1">
-                <h2 className="text-xl font-black text-slate-800">Register Business</h2>
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">New Local Listing</p>
+                <h2 className="text-xl font-black text-slate-800">{t('registerBusiness')}</h2>
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{t('newListing')}</p>
               </div>
               <button onClick={() => setShowForm(false)} className="p-2 text-slate-300 hover:text-slate-500 transition-colors">
                 <X size={24} />
@@ -224,45 +224,45 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
             
             <form onSubmit={handleSubmit} className="p-8 space-y-4 max-h-[70vh] overflow-y-auto hide-scrollbar">
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Business Name</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('businessName')}</label>
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
                   <Store size={18} className="text-slate-400" />
-                  <input required placeholder="Shop Name" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <input required placeholder={t('shopName')} className="bg-transparent outline-none text-sm w-full font-bold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('category')}</label>
                   <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold outline-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option value="Grocery">Grocery</option>
-                    <option value="Salon">Salon</option>
-                    <option value="Medical">Medical</option>
-                    <option value="Agri-Store">Agri-Store</option>
-                    <option value="Tailor">Tailor</option>
-                    <option value="Dairy">Dairy</option>
-                    <option value="Other">Other</option>
+                    <option value="Grocery">{t('grocery')}</option>
+                    <option value="Salon">{t('salon')}</option>
+                    <option value="Medical">{t('medical')}</option>
+                    <option value="Agri-Store">{t('agriStore')}</option>
+                    <option value="Tailor">{t('tailor')}</option>
+                    <option value="Dairy">{t('dairy')}</option>
+                    <option value="Other">{t('other')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('contact')}</label>
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
                     <Phone size={18} className="text-slate-400" />
-                    <input required type="tel" placeholder="Mobile" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.contact} onChange={e => setFormData({...formData, contact: e.target.value})} />
+                    <input required type="tel" placeholder={t('mobileNumber')} className="bg-transparent outline-none text-sm w-full font-bold" value={formData.contact} onChange={e => setFormData({...formData, contact: e.target.value})} />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Owner Name</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('ownerName')}</label>
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
                   <User size={18} className="text-slate-400" />
-                  <input required placeholder="Full Name" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} />
+                  <input required placeholder={t('fullName')} className="bg-transparent outline-none text-sm w-full font-bold" value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Operating Hours</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('operatingHours')}</label>
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
                   <Clock size={18} className="text-slate-400" />
                   <input required placeholder="e.g. 9 AM - 8 PM" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.hours} onChange={e => setFormData({...formData, hours: e.target.value})} />
@@ -270,12 +270,12 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
-                <textarea required rows={2} placeholder="Briefly describe your services..." className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('description')}</label>
+                <textarea required rows={2} placeholder={t('description')} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Registration Proof (License/ID)</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('uploadProof')}</label>
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
                 <div 
                   onClick={() => fileInputRef.current?.click()}
@@ -289,14 +289,14 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
                   ) : (
                     <>
                       <UploadCloud size={24} className="text-slate-200" />
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Upload Proof Document</p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{t('uploadProof')}</p>
                     </>
                   )}
                 </div>
               </div>
 
               <button type="submit" className="w-full bg-indigo-600 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
-                <Save size={18} /> Register Business
+                <Save size={18} /> {t('registerBusiness')}
               </button>
             </form>
           </div>

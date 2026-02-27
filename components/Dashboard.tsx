@@ -1,18 +1,22 @@
 
 import React, { useState } from 'react';
-import { Bell, Sparkles, CreditCard, ChevronRight, Info, Megaphone, ExternalLink, MapPin, X, Calendar, BadgeCheck, Sun, Droplets, Wind, Thermometer, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bell, Sparkles, CreditCard, ChevronRight, Info, Megaphone, ExternalLink, MapPin, X, Calendar, BadgeCheck, Sun, Droplets, Wind, Thermometer, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import Logo from './Logo.tsx';
 import { SERVICES, getIcon, DICTIONARY } from '../constants.tsx';
 import { ServiceType, Language, UserProfile, Bill, VillageNotice } from '../types.ts';
+import LiveWeather from './LiveWeather.tsx';
 
 interface DashboardProps {
   lang: Language;
   user: UserProfile;
   bills: Bill[];
   notices: VillageNotice[];
+  selectedVillages: string[];
   onSetLang: (lang: Language) => void;
   onSelectService: (id: ServiceType) => void;
   onOpenNotifications: () => void;
+  onAddVillage: (village: string) => void;
+  onRemoveVillage: (village: string) => void;
   hasUnread: boolean;
 }
 
@@ -62,22 +66,28 @@ const NoticeDetailModal: React.FC<{ notice: VillageNotice; onClose: () => void; 
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSetLang, onSelectService, onOpenNotifications, hasUnread }) => {
-  const [selectedNotice, setSelectedNotice] = useState<VillageNotice | null>(null);
-  const [isWeatherExpanded, setIsWeatherExpanded] = useState(false);
+const Dashboard: React.FC<DashboardProps> = ({ 
+  lang, user, bills, notices, selectedVillages, 
+  onSetLang, onSelectService, onOpenNotifications, onAddVillage, onRemoveVillage, 
+  hasUnread 
+}) => {
+  const [expandedWeatherIdx, setExpandedWeatherIdx] = useState<number | null>(null);
+  const [showAddVillage, setShowAddVillage] = useState(false);
+  const [newVillageName, setNewVillageName] = useState('');
   const [showAllServices, setShowAllServices] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState<VillageNotice | null>(null);
+
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
   const unpaidBills = bills.filter(b => b.status === 'Unpaid' && b.type !== 'Electricity');
 
-  const now = new Date();
-  const formattedDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + 
-                        now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-  const weatherForecast = [
-    { day: 'Tomorrow', temp: '31°C', icon: <Sun size={14} className="text-amber-400" /> },
-    { day: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { weekday: 'short' }), temp: '29°C', icon: <Droplets size={14} className="text-blue-400" /> },
-    { day: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { weekday: 'short' }), temp: '30°C', icon: <Sun size={14} className="text-amber-400" /> },
-  ];
+  const handleAddVillage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newVillageName.trim()) {
+      onAddVillage(newVillageName.trim());
+      setNewVillageName('');
+      setShowAddVillage(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full animate-slide-in relative">
@@ -104,73 +114,79 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user, bills, notices, onSet
 
       {/* SCROLLABLE BODY */}
       <div className="flex-1 overflow-y-auto pb-10 hide-scrollbar">
-        {/* EXPANDABLE WEATHER WIDGET */}
-        <div className="px-5 mt-4">
-          <div 
-            onClick={() => setIsWeatherExpanded(!isWeatherExpanded)}
-            className={`bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[32px] p-6 text-white shadow-lg relative overflow-hidden transition-all duration-500 cursor-pointer ${isWeatherExpanded ? 'h-auto' : 'h-28'}`}
-          >
-            <div className="relative z-10 flex justify-between items-start">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-2">
-                   <h3 className="text-3xl font-black">28°C</h3>
-                   <span className="text-xs font-bold opacity-60">Clear Sky</span>
-                </div>
-                <div className="flex items-center gap-1 opacity-80">
-                  <MapPin size={10} />
-                  <p className="text-[10px] font-bold truncate max-w-[140px] uppercase tracking-widest">{user.village}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/10 mb-2">
-                  <Sun size={20} className="text-amber-300" />
-                </div>
-                <p className="text-[9px] uppercase font-black opacity-60 tracking-widest">{formattedDate}</p>
-              </div>
-            </div>
+        {/* LIVE WEATHER SECTION */}
+        <div className="px-5 mt-4 space-y-4">
+          <div className="flex items-center justify-between px-1">
+             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('liveWeather')}</h2>
+             <button 
+               onClick={() => setShowAddVillage(true)}
+               className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+               title={t('addVillage')}
+             >
+               <Plus size={14} />
+             </button>
+          </div>
 
-            {isWeatherExpanded && (
-              <div className="relative z-10 mt-6 pt-6 border-t border-white/10 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-white/10 p-3 rounded-2xl flex flex-col items-center gap-1">
-                    <Droplets size={14} className="text-blue-300" />
-                    <span className="text-[10px] font-black">45%</span>
-                    <span className="text-[8px] opacity-60 uppercase">Humidity</span>
-                  </div>
-                  <div className="bg-white/10 p-3 rounded-2xl flex flex-col items-center gap-1">
-                    <Wind size={14} className="text-slate-300" />
-                    <span className="text-[10px] font-black">12 km/h</span>
-                    <span className="text-[8px] opacity-60 uppercase">Wind</span>
-                  </div>
-                  <div className="bg-white/10 p-3 rounded-2xl flex flex-col items-center gap-1">
-                    <Thermometer size={14} className="text-rose-300" />
-                    <span className="text-[10px] font-black">34°C</span>
-                    <span className="text-[8px] opacity-60 uppercase">Feels Like</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                   <p className="text-[9px] font-black uppercase tracking-widest opacity-60">3-Day Forecast</p>
-                   <div className="space-y-2">
-                      {weatherForecast.map((f, i) => (
-                        <div key={i} className="flex items-center justify-between bg-white/5 px-4 py-2 rounded-xl">
-                           <span className="text-[10px] font-bold">{f.day}</span>
-                           <div className="flex items-center gap-3">
-                              {f.icon}
-                              <span className="text-[10px] font-black">{f.temp}</span>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar snap-x">
+            {selectedVillages.map((v, idx) => (
+              <div key={v} className="min-w-[280px] snap-center relative group">
+                <LiveWeather 
+                  village={v} 
+                  lang={lang}
+                  isExpanded={expandedWeatherIdx === idx} 
+                  onToggle={() => setExpandedWeatherIdx(expandedWeatherIdx === idx ? null : idx)} 
+                />
+                {selectedVillages.length > 1 && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveVillage(v);
+                    }}
+                    className="absolute -top-2 -right-2 bg-white text-rose-500 p-1.5 rounded-full shadow-md border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
               </div>
-            )}
-            
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-30">
-               {isWeatherExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </div>
+            ))}
           </div>
         </div>
+
+        {showAddVillage && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white rounded-[32px] p-8 w-full max-w-xs shadow-2xl space-y-6 animate-in zoom-in-95 duration-300">
+              <div className="text-center space-y-1">
+                <h3 className="text-xl font-black text-slate-800">{t('addVillage')}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('trackWeather')}</p>
+              </div>
+              <form onSubmit={handleAddVillage} className="space-y-4">
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder={t('enterVillageName')} 
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-emerald-500 transition-colors"
+                  value={newVillageName}
+                  onChange={(e) => setNewVillageName(e.target.value)}
+                />
+                <div className="flex gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setShowAddVillage(false)}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100"
+                  >
+                    {t('add')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* SCROLLABLE NOTICES SECTION */}
         {notices.length > 0 && (

@@ -1,10 +1,37 @@
 
 import React from 'react';
-import { Mail, ShieldCheck, User, Code, Info, Download, Globe } from 'lucide-react';
+import { Mail, ShieldCheck, User, Code, Info, Download, Globe, Share2 } from 'lucide-react';
 import Logo from './Logo';
 import MaharashtraEmblem from './MaharashtraEmblem';
+import { Language } from '../types';
+import { DICTIONARY } from '../constants';
 
-const AboutView: React.FC = () => {
+interface AboutViewProps {
+  lang: Language;
+}
+
+const AboutView: React.FC<AboutViewProps> = ({ lang }) => {
+  const t = (key: string) => DICTIONARY[key]?.[lang] || key;
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'MyGaav - Digital Village Hub',
+      text: t('downloadApp'),
+      url: 'https://median.co/share/pwzbkaj'
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        alert(t('linkCopied'));
+      }
+    } catch (err) {
+      console.log('Error sharing:', err);
+    }
+  };
+
   return (
     <div className="h-full bg-slate-50 flex flex-col animate-slide-in overflow-y-auto hide-scrollbar">
       <div className="p-10 flex flex-col items-center text-center space-y-8">
@@ -21,7 +48,7 @@ const AboutView: React.FC = () => {
             <div className="flex justify-between items-center text-xs font-bold">
                 <div className="flex items-center gap-2 text-slate-400">
                   <Info size={16} />
-                  <span>Version</span>
+                  <span>{t('version')}</span>
                 </div>
                 <span className="text-slate-800 font-mono">2.1.0-stable</span>
             </div>
@@ -29,7 +56,7 @@ const AboutView: React.FC = () => {
             <div className="flex justify-between items-center text-xs font-bold">
                 <div className="flex items-center gap-2 text-slate-400">
                   <Code size={16} />
-                  <span>Developed by</span>
+                  <span>{t('developedBy')}</span>
                 </div>
                 <span className="text-emerald-600 font-black">V.M.KOLE</span>
             </div>
@@ -37,7 +64,7 @@ const AboutView: React.FC = () => {
 
           <div className="space-y-2">
             <a 
-              href="https://drive.google.com/file/d/1sAwF9oS6mBoTRiE0bsYaWidj_oHqSSwi/view?usp=drive_link" 
+              href="https://median.co/share/pwzbkaj" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:bg-slate-50 transition-all group"
@@ -46,7 +73,7 @@ const AboutView: React.FC = () => {
                 <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Download size={16} />
                 </div>
-                <span className="text-xs font-black text-slate-800">Download App</span>
+                <span className="text-xs font-black text-slate-800">{t('downloadApp')}</span>
               </div>
               <Download size={14} className="text-slate-300" />
             </a>
@@ -61,10 +88,23 @@ const AboutView: React.FC = () => {
                 <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Globe size={16} />
                 </div>
-                <span className="text-xs font-black text-slate-800">Go to App Web</span>
+                <span className="text-xs font-black text-slate-800">{t('goToAppWeb')}</span>
               </div>
               <Globe size={14} className="text-slate-300" />
             </a>
+
+            <button 
+              onClick={handleShare}
+              className="w-full flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:bg-slate-50 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Share2 size={16} />
+                </div>
+                <span className="text-xs font-black text-slate-800">{t('shareApp')}</span>
+              </div>
+              <Share2 size={14} className="text-slate-300" />
+            </button>
           </div>
 
           <a 
@@ -75,7 +115,7 @@ const AboutView: React.FC = () => {
                 <Mail size={20} />
                 <span className="text-sm font-black tracking-tight">vkole357@gmail.com</span>
              </div>
-             <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Contact for Support</p>
+             <p className="text-[9px] font-black uppercase tracking-widest opacity-60">{t('contactSupport')}</p>
           </a>
         </div>
 
@@ -83,7 +123,7 @@ const AboutView: React.FC = () => {
            <MaharashtraEmblem size="lg" theme="dark" />
            <div className="max-w-[240px]">
              <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest">
-               Empowering rural communities through decentralized digital governance.
+               {t('empoweringRural')}
              </p>
            </div>
         </div>

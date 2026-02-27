@@ -51,6 +51,13 @@ const App: React.FC = () => {
   const [residents, setResidents] = useState<UserProfile[]>([]);
   const [businesses, setBusinesses] = useState<LocalBusiness[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [selectedVillages, setSelectedVillages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (user && selectedVillages.length === 0) {
+      setSelectedVillages([user.village]);
+    }
+  }, [user]);
 
   // Persistence
   useEffect(() => {
@@ -323,9 +330,18 @@ const App: React.FC = () => {
                 user={user} 
                 bills={bills.filter(b => b.userId === user.id)} 
                 notices={userNotices} 
+                selectedVillages={selectedVillages}
                 onSetLang={setLanguage} 
                 onSelectService={(id) => { setActiveServiceId(id); setCurrentView('service-detail'); }} 
                 onOpenNotifications={() => setCurrentView('notifications')} 
+                onAddVillage={(v) => {
+                  if (!selectedVillages.includes(v)) {
+                    setSelectedVillages([...selectedVillages, v]);
+                  }
+                }}
+                onRemoveVillage={(v) => {
+                  setSelectedVillages(selectedVillages.filter(sv => sv !== v));
+                }}
                 hasUnread={notifications.some(n => !n.read)} 
               />
             )}
@@ -407,20 +423,20 @@ const App: React.FC = () => {
               />
             )}
 
-            {currentView === 'about' && <AboutView />}
+            {currentView === 'about' && <AboutView lang={language} />}
 
             {currentView === 'profile' && (
               <div className="h-full flex flex-col bg-slate-50">
                 <div className="px-4 py-2 bg-slate-50 flex items-center justify-between border-b border-slate-100">
                   <MaharashtraEmblem size="sm" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Digital Gaav Portal</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('digitalGaavPortal')}</span>
                 </div>
                 <div className="p-8 flex-1 overflow-y-auto">
                   <header className="flex items-center gap-4 mb-10">
                     <button onClick={() => setCurrentView('dashboard')} className="p-2 bg-white rounded-xl shadow-sm text-slate-400">
                         <Home size={20} />
                     </button>
-                    <h1 className="text-xl font-black text-slate-800">My Profile</h1>
+                    <h1 className="text-xl font-black text-slate-800">{t('myProfile')}</h1>
                   </header>
                   <div className="flex-1 flex flex-col items-center">
                     <div className="w-24 h-24 bg-emerald-100 rounded-[32px] flex items-center justify-center mb-6 shadow-inner">
@@ -432,15 +448,15 @@ const App: React.FC = () => {
                     <div className="mt-12 w-full space-y-4">
                       <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
                         <div className="flex justify-between items-center text-sm font-bold">
-                            <span className="text-slate-400">Email</span>
+                            <span className="text-slate-400">{t('email')}</span>
                             <span className="text-slate-800">{user.email}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm font-bold">
-                            <span className="text-slate-400">Resident ID</span>
+                            <span className="text-slate-400">{t('residentId')}</span>
                             <span className="text-emerald-600 font-mono">{user.id}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm font-bold">
-                            <span className="text-slate-400">Member Since</span>
+                            <span className="text-slate-400">{t('memberSince')}</span>
                             <span className="text-slate-800">{user.joinedAt}</span>
                         </div>
                       </div>

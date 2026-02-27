@@ -22,6 +22,17 @@ const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; lang: Languag
   const isPaid = bill.status === 'Paid';
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
   
+  const getLocalizedBillType = (type: BillType) => {
+    switch (type) {
+      case 'Home Tax': return t('homeTax');
+      case 'Water': return t('waterTax');
+      case 'GS Bill': return t('gsBill');
+      case 'Electricity': return t('electricityBill');
+      case 'Gas': return t('gasBill');
+      default: return t('otherService');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={onClose}></div>
@@ -47,7 +58,7 @@ const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; lang: Languag
               {isPaid ? t('paymentReceipt') : t('taxInvoice')}
             </span>
             <div className="flex items-center gap-2 mt-1">
-              <h2 className="text-2xl font-black text-slate-800">{bill.type}</h2>
+              <h2 className="text-2xl font-black text-slate-800">{getLocalizedBillType(bill.type)}</h2>
               {isPaid && <BadgeCheck className="text-emerald-500" size={24} />}
             </div>
           </div>
@@ -72,7 +83,7 @@ const BillDetailModal: React.FC<{ bill: Bill; onClose: () => void; lang: Languag
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('detailedRemarks')}</p>
               <div className="bg-white p-4 rounded-2xl border border-slate-100">
                 <p className="text-xs font-bold text-slate-700 leading-relaxed italic">
-                  {bill.description || 'General maintenance and property development taxes as per Gram Panchayat resolution.'}
+                  {bill.description || t('generalTaxRemark')}
                 </p>
               </div>
             </div>
@@ -106,6 +117,17 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
   const [showTaxCenter, setShowTaxCenter] = useState(false);
   
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
+
+  const getLocalizedBillType = (type: BillType) => {
+    switch (type) {
+      case 'Home Tax': return t('homeTax');
+      case 'Water': return t('waterTax');
+      case 'GS Bill': return t('gsBill');
+      case 'Electricity': return t('electricityBill');
+      case 'Gas': return t('gasBill');
+      default: return t('otherService');
+    }
+  };
 
   const isBillRelatedToService = (billType: BillType, serviceId: ServiceType) => {
     if (serviceId === ServiceType.GRAMPANCHAYAT) {
@@ -195,7 +217,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
                            {bill.type === 'Home Tax' ? <HomeIcon size={24}/> : <Droplets size={24}/>}
                         </div>
                         <div>
-                           <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{bill.type}</p>
+                           <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{getLocalizedBillType(bill.type)}</p>
                            <p className="text-lg font-black text-slate-800 leading-none">₹{bill.amount}</p>
                            <div className="flex items-center gap-1.5 mt-1">
                               <Calendar size={10} className="text-rose-400" />
@@ -233,7 +255,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
                            {bill.type === 'Home Tax' ? <HomeIcon size={24}/> : <Droplets size={24}/>}
                         </div>
                         <div>
-                           <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{bill.type}</p>
+                           <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{getLocalizedBillType(bill.type)}</p>
                            <p className="text-lg font-black text-slate-400 line-through decoration-slate-300 leading-none">₹{bill.amount}</p>
                            <div className="flex items-center gap-1.5 mt-1">
                               <BadgeCheck size={10} className="text-emerald-500" />
@@ -280,7 +302,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
                               <Receipt size={24} />}
                           </div>
                           <div>
-                             <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{bill.type}</p>
+                             <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{getLocalizedBillType(bill.type)}</p>
                              <p className="text-xl font-black text-slate-800 leading-none">₹{bill.amount}</p>
                              <div className="flex items-center gap-1.5 mt-1.5">
                                 <Calendar size={12} className="text-slate-300" />

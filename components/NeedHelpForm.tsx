@@ -39,19 +39,19 @@ const NeedHelpForm: React.FC<NeedHelpFormProps> = ({ lang, service, onBack, onSu
              <Info size={20} />
           </div>
           <p className="text-[11px] font-bold text-indigo-700 leading-relaxed uppercase tracking-tight">
-            Describe your issue or question regarding {service.title[lang]} services. An officer will review and respond shortly via your ticket status.
+            {t('helpDescriptionInfo')} {service.title[lang]} {t('helpDescriptionInfoSuffix')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 pb-20">
           <div className="space-y-3">
-             <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Description of issue</label>
+             <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">{t('issueDescription')}</label>
              <div className="bg-white rounded-[32px] p-2 border border-slate-100 shadow-sm focus-within:border-emerald-400 transition-all">
                 <textarea 
                   rows={8} 
                   required
                   className="w-full bg-transparent p-4 text-sm font-bold outline-none resize-none placeholder:text-slate-300"
-                  placeholder="Tell us what you need help with..."
+                  placeholder={t('helpDescriptionPlaceholder')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -60,14 +60,14 @@ const NeedHelpForm: React.FC<NeedHelpFormProps> = ({ lang, service, onBack, onSu
 
           <div className="p-4 bg-slate-100 rounded-2xl flex items-center gap-3 text-slate-400">
              <AlertCircle size={16} />
-             <p className="text-[9px] font-black uppercase tracking-widest">Average response time: 24-48 hours</p>
+             <p className="text-[9px] font-black uppercase tracking-widest">{t('avgResponseTime')}</p>
           </div>
 
           <button 
             type="submit"
             className="w-full bg-slate-900 text-white py-5 rounded-[28px] font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
           >
-            <Send size={20} /> Send Help Request
+            <Send size={20} /> {t('sendHelpRequest')}
           </button>
         </form>
       </div>

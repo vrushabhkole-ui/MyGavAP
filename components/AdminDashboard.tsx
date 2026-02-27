@@ -8,7 +8,7 @@ import {
   UploadCloud, FileCheck, Save, MessageSquare, Store, Send, Check, Filter
 } from 'lucide-react';
 import { ServiceRequest, Language, RequestStatus, ServiceType, UserProfile, Bill, BillType, VillageNotice, FileMetadata, Transaction, LocalBusiness } from '../types.ts';
-import { SERVICES } from '../constants.tsx';
+import { SERVICES, DICTIONARY } from '../constants.tsx';
 
 interface AdminDashboardProps {
   lang: Language;
@@ -32,13 +32,16 @@ interface AdminDashboardProps {
 
 const ProcessRequestModal: React.FC<{ 
   request: ServiceRequest; 
+  lang: Language;
   onClose: () => void;
   onUpdate: (id: string, status: RequestStatus, report: string, adminDoc?: FileMetadata) => void;
-}> = ({ request, onClose, onUpdate }) => {
+}> = ({ request, lang, onClose, onUpdate }) => {
   const [status, setStatus] = useState<RequestStatus>(request.status);
   const [report, setReport] = useState(request.adminReport || '');
   const [file, setFile] = useState<FileMetadata | null>(request.adminDocument || null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const t = (key: string) => DICTIONARY[key]?.[lang] || key;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -85,7 +88,7 @@ const ProcessRequestModal: React.FC<{
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Process Request</h2>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">{t('processRequest')}</h2>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: {request.id}</span>
               <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
@@ -97,7 +100,7 @@ const ProcessRequestModal: React.FC<{
             <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-3">
                <div className="flex items-center gap-2 text-slate-400">
                   <MessageSquare size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-[0.15em]">Citizen's Original Request</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.15em]">{t('citizenRequest')}</span>
                </div>
                <div className="bg-white p-4 rounded-2xl border border-slate-50 shadow-sm">
                   <p className="text-sm font-bold text-slate-700 leading-relaxed italic">
@@ -119,7 +122,7 @@ const ProcessRequestModal: React.FC<{
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Update Status</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('updateStatus')}</label>
               <div className="grid grid-cols-2 gap-2">
                 {(['Pending', 'In Progress', 'Resolved', 'Cancelled'] as RequestStatus[]).map(s => (
                   <button 
@@ -134,34 +137,34 @@ const ProcessRequestModal: React.FC<{
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Official Report / Remarks</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('officialReport')}</label>
               <textarea 
                 rows={4}
                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-indigo-200 transition-all resize-none shadow-inner"
-                placeholder="Explain the steps taken or final resolution details..."
+                placeholder={t('officialReport')}
                 value={report}
                 onChange={(e) => setReport(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Resolution Document (Optional)</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('attachDocument')}</label>
               <input type="file" ref={fileRef} className="hidden" onChange={handleFileChange} />
               <div 
                 onClick={() => fileRef.current?.click()}
                 className={`w-full border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${file ? 'bg-emerald-50 border-emerald-300' : 'bg-slate-50 border-slate-100'}`}
               >
-                {file ? (
-                  <>
-                    <FileCheck size={28} className="text-emerald-600" />
-                    <p className="text-[11px] font-black text-emerald-800 truncate max-w-full px-2">{file.name}</p>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud size={28} className="text-slate-200" />
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Attach Official PDF/DOC</p>
-                  </>
-                )}
+                 {file ? (
+                   <>
+                     <FileCheck size={28} className="text-emerald-600" />
+                     <p className="text-[11px] font-black text-emerald-800 truncate max-w-full px-2">{file.name}</p>
+                   </>
+                 ) : (
+                   <>
+                     <UploadCloud size={28} className="text-slate-200" />
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{t('attachDocument')}</p>
+                   </>
+                 )}
               </div>
             </div>
           </div>
@@ -170,7 +173,7 @@ const ProcessRequestModal: React.FC<{
             onClick={handleFinalize}
             className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
           >
-            <Save size={18} /> Finalize Resolution
+            <Save size={18} /> {t('finalizeResolution')}
           </button>
         </div>
       </div>
