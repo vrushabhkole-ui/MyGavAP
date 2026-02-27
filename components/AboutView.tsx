@@ -67,13 +67,16 @@ const AboutView: React.FC = () => {
             </a>
           </div>
 
-          <div className="bg-emerald-600 p-6 rounded-[32px] shadow-lg shadow-emerald-100 text-white space-y-3">
+          <a 
+            href="mailto:vkole357@gmail.com"
+            className="block bg-emerald-600 p-6 rounded-[32px] shadow-lg shadow-emerald-100 text-white space-y-3 hover:bg-emerald-700 transition-colors"
+          >
              <div className="flex items-center gap-3 justify-center">
                 <Mail size={20} />
                 <span className="text-sm font-black tracking-tight">vkole357@gmail.com</span>
              </div>
              <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Contact for Support</p>
-          </div>
+          </a>
         </div>
 
         <div className="pt-10 flex flex-col items-center space-y-6">
