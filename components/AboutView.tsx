@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mail, ShieldCheck, User, Code, Info } from 'lucide-react';
+import { Mail, ShieldCheck, User, Code, Info, Download, Globe } from 'lucide-react';
 import Logo from './Logo';
 import MaharashtraEmblem from './MaharashtraEmblem';
 
@@ -33,6 +33,38 @@ const AboutView: React.FC = () => {
                 </div>
                 <span className="text-emerald-600 font-black">V.M.KOLE</span>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <a 
+              href="https://drive.google.com/file/d/1sAwF9oS6mBoTRiE0bsYaWidj_oHqSSwi/view?usp=drive_link" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:bg-slate-50 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Download size={16} />
+                </div>
+                <span className="text-xs font-black text-slate-800">Download App</span>
+              </div>
+              <Download size={14} className="text-slate-300" />
+            </a>
+
+            <a 
+              href="https://www.mygaav.site/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:bg-slate-50 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Globe size={16} />
+                </div>
+                <span className="text-xs font-black text-slate-800">Go to App Web</span>
+              </div>
+              <Globe size={14} className="text-slate-300" />
+            </a>
           </div>
 
           <div className="bg-emerald-600 p-6 rounded-[32px] shadow-lg shadow-emerald-100 text-white space-y-3">

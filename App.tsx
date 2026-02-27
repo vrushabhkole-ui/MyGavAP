@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Home, Bot, Grid, User, Info, Loader2, Download, X } from 'lucide-react';
+import { Home, Bot, Grid, User, Info, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard.tsx';
 import AISahayak from './components/AISahayak.tsx';
 import Auth, { USER_REGISTRY_KEY } from './Auth.tsx';
@@ -51,18 +51,6 @@ const App: React.FC = () => {
   const [residents, setResidents] = useState<UserProfile[]>([]);
   const [businesses, setBusinesses] = useState<LocalBusiness[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showDownloadPopup, setShowDownloadPopup] = useState(false);
-
-  useEffect(() => {
-    // Check if running in a web browser (not standalone/PWA)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
-    if (!isStandalone) {
-      const hasSeenPopup = sessionStorage.getItem('mygaav_download_popup_seen');
-      if (!hasSeenPopup) {
-        setShowDownloadPopup(true);
-      }
-    }
-  }, []);
 
   // Persistence
   useEffect(() => {
@@ -495,54 +483,6 @@ const App: React.FC = () => {
       )}
 
       {showOnboarding && <OnboardingTour lang={language} onComplete={handleOnboardingComplete} />}
-
-      {showDownloadPopup && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 animate-in fade-in slide-in-from-bottom-10 duration-500">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowDownloadPopup(false)}></div>
-          <div className="relative w-full max-w-sm bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
-                  <Download size={24} />
-                </div>
-                <button 
-                  onClick={() => {
-                    setShowDownloadPopup(false);
-                    sessionStorage.setItem('mygaav_download_popup_seen', 'true');
-                  }} 
-                  className="p-2 text-slate-300 hover:text-slate-500 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-black text-slate-800 leading-tight">Download MyGaav App</h3>
-                <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">For a better experience</p>
-              </div>
-
-              <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                Get the best experience by installing our official app on your device.
-              </p>
-
-              <div className="pt-2">
-                <a 
-                  href="https://drive.google.com/file/d/1sAwF9oS6mBoTRiE0bsYaWidj_oHqSSwi/view?usp=drive_link" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 shadow-lg shadow-emerald-200 uppercase tracking-widest active:scale-95 transition-all"
-                  onClick={() => {
-                    setShowDownloadPopup(false);
-                    sessionStorage.setItem('mygaav_download_popup_seen', 'true');
-                  }}
-                >
-                  <Download size={18} /> Download Now
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
