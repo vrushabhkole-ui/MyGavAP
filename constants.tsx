@@ -276,8 +276,7 @@ export const SERVICES: ServiceInfo[] = [
     color: "bg-blue-500",
     description: { en: "Bill Payments & Issues", hi: "बिल और शिकायतें", mr: "बिल आणि तक्रारी" },
     details: [
-      { en: "Pay Monthly Bill", hi: "मासिक बिल भरें", mr: "मासिक बिल भरा" },
-      { en: "Report Power Cut", hi: "बिजली कटौती की सूचना", mr: "वीज खंडित तक्रार" }
+      { en: "Pay Monthly Bill", hi: "मासिक बिल भरें", mr: "मासिक बिल भरा" }
     ]
   },
   {

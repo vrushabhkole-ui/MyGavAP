@@ -52,7 +52,6 @@ const ElectricityForm: React.FC<ElectricityFormProps> = ({ lang, onBack, onSubmi
               <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Problem Category</label>
               <select className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3.5 text-sm font-bold appearance-none outline-none focus:border-blue-500 transition-all" value={formData.issueType} onChange={(e) => setFormData({...formData, issueType: e.target.value})}>
                 <option>Bill Correction</option>
-                <option>Power Fault / Outage</option>
                 <option>New Meter Connection</option>
                 <option>Meter Replacement</option>
               </select>

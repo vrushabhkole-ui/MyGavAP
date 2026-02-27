@@ -17,7 +17,10 @@ const CertificateForm: React.FC<CertificateFormProps> = ({ lang, onBack, onSubmi
   
   const [formData, setFormData] = useState({
     name: '',
+    fatherName: '',
+    motherName: '',
     date: '',
+    placeOfEvent: '',
     mobile: '',
     address: ''
   });
@@ -28,9 +31,12 @@ const CertificateForm: React.FC<CertificateFormProps> = ({ lang, onBack, onSubmi
     title: { en: 'Certificate', hi: 'प्रमाणपत्र', mr: 'प्रमाणपत्र' },
     birth: { en: 'Birth', hi: 'जन्म', mr: 'जन्म' },
     death: { en: 'Death', hi: 'मृत्यु', mr: 'मृत्यू' },
-    fullName: { en: 'Name', hi: 'नाम', mr: 'नाव' },
-    dob: { en: 'DOB', hi: 'जन्म तिथि', mr: 'जन्मतारीख' },
-    dod: { en: 'DOD', hi: 'मृत्यु तिथि', mr: 'मृत्यूची तारीख' },
+    fullName: { en: 'Full Name of Person', hi: 'व्यक्ति का पूरा नाम', mr: 'व्यक्तीचे पूर्ण नाव' },
+    fatherName: { en: "Father's Name", hi: 'पिता का नाम', mr: 'वडिलांचे नाव' },
+    motherName: { en: "Mother's Name", hi: 'माता का नाम', mr: 'आईचे नाव' },
+    dob: { en: 'Date of Birth', hi: 'जन्म तिथि', mr: 'जन्मतारीख' },
+    dod: { en: 'Date of Death', hi: 'मृत्यु तिथि', mr: 'मृत्यूची तारीख' },
+    place: { en: 'Place of Event (Hospital/Home)', hi: 'घटना का स्थान', mr: 'घटनेचे ठिकाण' },
     mobile: { en: 'Mobile', hi: 'मोबाईल', mr: 'मोबाईल' },
     address: { en: 'Address', hi: 'पता', mr: 'पत्ता' },
     submit: { en: 'Submit Request', hi: 'जमा करें', mr: 'सादर करा' }
@@ -40,7 +46,7 @@ const CertificateForm: React.FC<CertificateFormProps> = ({ lang, onBack, onSubmi
     e.preventDefault();
     const typeLabel = labels[type][lang];
     const dateLabel = type === 'birth' ? labels.dob[lang] : labels.dod[lang];
-    const description = `[${typeLabel}] Name: ${formData.name}, ${dateLabel}: ${formData.date}, Mobile: ${formData.mobile}, Addr: ${formData.address}`;
+    const description = `[${typeLabel}] Name: ${formData.name}, Father: ${formData.fatherName}, Mother: ${formData.motherName}, ${dateLabel}: ${formData.date}, Place: ${formData.placeOfEvent}, Mob: ${formData.mobile}`;
     onSubmit(ServiceType.GRAMPANCHAYAT, description, userDoc || undefined);
   };
 
@@ -83,11 +89,36 @@ const CertificateForm: React.FC<CertificateFormProps> = ({ lang, onBack, onSubmi
               </div>
             </div>
 
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">{labels.fatherName[lang]}</label>
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                  <User size={18} className="text-slate-400 opacity-50" />
+                  <input required type="text" placeholder="Father's Full Name" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.fatherName} onChange={(e) => setFormData({...formData, fatherName: e.target.value})} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">{labels.motherName[lang]}</label>
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                  <User size={18} className="text-slate-400 opacity-50" />
+                  <input required type="text" placeholder="Mother's Full Name" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.motherName} onChange={(e) => setFormData({...formData, motherName: e.target.value})} />
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">{type === 'birth' ? labels.dob[lang] : labels.dod[lang]}</label>
               <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
                 <Calendar size={18} className="text-slate-400" />
                 <input required type="date" className="bg-transparent outline-none text-sm w-full font-bold uppercase" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">{labels.place[lang]}</label>
+              <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                <MapPin size={18} className="text-slate-400" />
+                <input required type="text" placeholder="Hospital Name or Home Address" className="bg-transparent outline-none text-sm w-full font-bold" value={formData.placeOfEvent} onChange={(e) => setFormData({...formData, placeOfEvent: e.target.value})} />
               </div>
             </div>
 

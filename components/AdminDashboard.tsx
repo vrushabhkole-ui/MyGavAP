@@ -23,6 +23,7 @@ interface AdminDashboardProps {
   onUpdateResidents: (residents: UserProfile[]) => void;
   onUpdateStatus: (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => void;
   onIssueBill: (bill: Bill) => void;
+  onMarkBillPaid: (id: string) => void;
   onDeleteBill: (id: string) => void;
   onIssueNotice: (notice: VillageNotice) => void;
   onDeleteNotice: (id: string) => void;
@@ -267,7 +268,7 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   lang, user, requests, residents, bills, notices, transactions, businesses, onUpdateBusinesses,
-  onUpdateResidents, onUpdateStatus, onIssueBill, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
+  onUpdateResidents, onUpdateStatus, onIssueBill, onMarkBillPaid, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
 }) => {
   const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses' | 'approvals'>('requests');
   const [selectedResident, setSelectedResident] = useState<UserProfile | null>(null);
@@ -656,6 +657,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                             <div className="flex items-center gap-2">
                                <span className={`font-black text-[12px] ${b.status === 'Paid' ? 'text-emerald-600' : 'text-slate-800'}`}>₹{b.amount}</span>
+                               {b.status === 'Unpaid' && (
+                                 <button 
+                                   onClick={() => onMarkBillPaid(b.id)}
+                                   className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100"
+                                   title="Mark as Paid (Cash)"
+                                 >
+                                   Paid
+                                 </button>
+                               )}
                                <button 
                                  onClick={() => onDeleteBill(b.id)}
                                  className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"

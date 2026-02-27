@@ -288,6 +288,28 @@ const App: React.FC = () => {
             onUpdateResidents={handleUpdateResidents}
             onUpdateStatus={updateRequestStatus} 
             onIssueBill={(b) => setBills(prev => [{ ...b, village: user.village, subDistrict: user.subDistrict }, ...prev])} 
+            onMarkBillPaid={(id) => {
+              setBills(prev => prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b));
+              const bill = bills.find(b => b.id === id);
+              if (bill) {
+                const newTx: Transaction = {
+                  id: `TX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                  billId: bill.id,
+                  userId: bill.userId,
+                  userName: residents.find(r => r.id === bill.userId)?.name || 'Resident',
+                  village: bill.village,
+                  subDistrict: bill.subDistrict,
+                  type: bill.type,
+                  amount: bill.amount,
+                  recipient: user.name, // Admin name
+                  vpa: 'CASH-PAYMENT',
+                  timestamp: new Date().toLocaleString(),
+                  status: 'Success',
+                  referenceId: `CASH-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+                };
+                setTransactions(prev => [newTx, ...prev]);
+              }
+            }}
             onDeleteBill={(id) => setBills(prev => prev.filter(b => b.id !== id))}
             onIssueNotice={handleIssueNotice} 
             onDeleteNotice={handleDeleteNotice}
