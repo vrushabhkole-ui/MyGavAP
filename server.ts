@@ -4,6 +4,8 @@ import { createServer as createViteServer } from "vite";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Server as SocketIOServer } from "socket.io";
+import { createServer } from "http";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,6 +81,10 @@ if (!fs.existsSync(KEYS_FILE)) {
 
 async function startServer() {
   const app = express();
+  const httpServer = createServer(app);
+  const io = new SocketIOServer(httpServer, {
+    cors: { origin: "*" }
+  });
   const PORT = 3000;
 
   app.use(express.json());
@@ -86,6 +92,13 @@ async function startServer() {
   // Helper to read/write
   const readData = (file: string) => JSON.parse(fs.readFileSync(file, "utf-8"));
   const saveData = (file: string, data: any) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
+
+  io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
+    socket.on("disconnect", () => {
+      console.log("Client disconnected:", socket.id);
+    });
+  });
 
   // API Routes
   app.get("/api/health", (req, res) => {
@@ -110,6 +123,7 @@ async function startServer() {
 
     app.post(`/api/${route.path}`, (req, res) => {
       saveData(route.file, req.body);
+      io.emit(`data-update-${route.path}`, req.body);
       res.json({ success: true });
     });
   });
@@ -134,12 +148,21 @@ async function startServer() {
 
     accounts.push(newAccount);
     saveData(REGISTRY_FILE, accounts);
+    io.emit('data-update-accounts', accounts);
     res.json({ success: true, account: newAccount });
   });
 
   // Clear all data
   app.post("/api/admin/clear-data", (req, res) => {
-    dataRoutes.forEach(r => saveData(r.file, []));
+    dataRoutes.forEach(r => {
+      if (r.path === 'accounts') {
+        saveData(r.file, SYSTEM_ACCOUNTS);
+        io.emit(`data-update-${r.path}`, SYSTEM_ACCOUNTS);
+      } else {
+        saveData(r.file, []);
+        io.emit(`data-update-${r.path}`, []);
+      }
+    });
     res.json({ message: "All data cleared successfully." });
   });
 
@@ -157,7 +180,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

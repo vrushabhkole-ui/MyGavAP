@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { Home, Bot, Grid, User, Info, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard.tsx';
 import AISahayak from './components/AISahayak.tsx';
@@ -47,20 +48,28 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedVillages, setSelectedVillages] = useState<string[]>([]);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const lastSyncedData = React.useRef<Record<string, string>>({});
 
   // Persistence Helpers
   const syncToServer = async (path: string, data: any) => {
     if (!isInitialLoadComplete) return;
+    
+    const dataString = JSON.stringify(data);
+    if (lastSyncedData.current[path] === dataString) {
+      return; // Skip if data hasn't actually changed
+    }
+    lastSyncedData.current[path] = dataString;
+
     try {
       const response = await fetch(`/api/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: dataString
       });
       if (!response.ok) throw new Error('Server error');
     } catch (e) {
       console.warn(`Failed to sync ${path} to server, falling back to local storage`);
-      localStorage.setItem(`MYGAAV_DATA_${path.toUpperCase()}`, JSON.stringify(data));
+      localStorage.setItem(`MYGAAV_DATA_${path.toUpperCase()}`, dataString);
     }
   };
 
@@ -103,6 +112,16 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    const socket = io();
+
+    socket.on('data-update-requests', (data) => { setRequests(data); });
+    socket.on('data-update-bills', (data) => { setBills(data); });
+    socket.on('data-update-transactions', (data) => { setTransactions(data); });
+    socket.on('data-update-notices', (data) => { setNotices(data); });
+    socket.on('data-update-notifications', (data) => { setNotifications(data); });
+    socket.on('data-update-businesses', (data) => { setBusinesses(data); });
+    socket.on('data-update-accounts', (data) => { setResidents(data.filter((u: any) => u.role === 'user')); });
+
     const session = localStorage.getItem('mygaav_active_session');
     if (session) {
       try {
@@ -146,6 +165,10 @@ const App: React.FC = () => {
     };
 
     loadAll();
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const handleLogin = (profile: UserProfile) => {
