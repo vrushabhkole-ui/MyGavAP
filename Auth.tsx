@@ -48,6 +48,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   });
 
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
   const [serverOfficerKeys, setServerOfficerKeys] = useState<string[]>([]);
 
@@ -122,12 +123,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
         return true;
       } else {
-        const err = await response.json().catch(() => ({ error: 'Registration failed (Server error)' }));
-        setError(err.error || 'Registration failed');
-        return false;
+        if (response.status === 400) {
+          const err = await response.json().catch(() => ({ error: 'Registration failed' }));
+          setError(err.error || 'Registration failed');
+          return false;
+        }
+        throw new Error(`Server error: ${response.status}`);
       }
     } catch (e) {
-      console.warn('Server connection failed, falling back to local storage');
+      console.warn('Server connection failed, falling back to local storage', e);
       
       const existing = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
       const exists = existing.find((a: any) => 
@@ -169,6 +173,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     const emailKey = formData.email.trim().toLowerCase();
 
     // Re-fetch accounts to ensure we have the latest
@@ -263,7 +268,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       if (role === 'admin') {
         onLogin(profile);
       } else {
-        setError('Registration successful! Your account is now pending approval from Grampanchayat.');
+        setSuccessMsg('Registration successful! Your account is now pending approval from Grampanchayat.');
         setIsLogin(true);
       }
     }
@@ -294,8 +299,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
         <div className="bg-white rounded-[40px] p-8 shadow-xl border border-slate-100">
           <div className="flex bg-slate-50 p-1 rounded-xl mb-8 border border-slate-100">
-            <button type="button" onClick={() => { setIsLogin(true); setError(''); }} className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${isLogin ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'}`}>Login</button>
-            <button type="button" onClick={() => { setIsLogin(false); setError(''); }} className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${!isLogin ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'}`}>Signup</button>
+            <button type="button" onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${isLogin ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'}`}>Login</button>
+            <button type="button" onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${!isLogin ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'}`}>Signup</button>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
@@ -409,6 +414,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600">
                 <AlertCircle size={18} />
                 <p className="text-[10px] font-black uppercase tracking-widest leading-tight">{error}</p>
+              </div>
+            )}
+            {successMsg && (
+              <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-600">
+                <CheckCircle2 size={18} />
+                <p className="text-[10px] font-black uppercase tracking-widest leading-tight">{successMsg}</p>
               </div>
             )}
 
