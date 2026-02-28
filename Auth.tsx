@@ -67,23 +67,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [villageSearch, setVillageSearch] = useState('');
   const [villageResults, setVillageResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const searchVillages = (query: string) => {
-    setVillageSearch(query);
-    
-    if (searchTimeout) clearTimeout(searchTimeout);
-    
-    if (query.length < 3) {
-      setVillageResults([]);
-      return;
-    }
+  // Robust Village Search with Debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (villageSearch.length < 3) {
+        setVillageResults([]);
+        return;
+      }
 
-    const timeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        // Using Indian Postal Pincode API for accurate village/pincode data
-        const response = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(query)}`);
+        // Detect if searching by Pincode or Name
+        const isPincode = /^\d{6}$/.test(villageSearch);
+        const endpoint = isPincode 
+          ? `https://api.postalpincode.in/pincode/${villageSearch}`
+          : `https://api.postalpincode.in/postoffice/${encodeURIComponent(villageSearch)}`;
+
+        const response = await fetch(endpoint);
         const data = await response.json();
         
         if (data[0].Status === "Success") {
@@ -99,13 +100,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         }
       } catch (e) {
         console.error("Village search failed", e);
+        setVillageResults([]);
       } finally {
         setIsSearching(false);
       }
-    }, 600); // 600ms debounce
+    }, 500);
 
-    setSearchTimeout(timeout);
-  };
+    return () => clearTimeout(delayDebounceFn);
+  }, [villageSearch]);
 
   const handleSelectVillage = (v: any) => {
     setFormData({
@@ -434,10 +436,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                       <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                         <Search size={18} className="text-emerald-600" />
                         <input 
-                          placeholder="Type village name (e.g. Sukhawadi)..." 
+                          placeholder="Type village name or 6-digit pincode..." 
                           className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
                           value={villageSearch}
-                          onChange={(e) => searchVillages(e.target.value)}
+                          onChange={(e) => setVillageSearch(e.target.value)}
                         />
                         {isSearching ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
@@ -454,7 +456,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
                       {villageResults.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-64 overflow-y-auto scrollbar-hide animate-in slide-in-from-top-2 duration-200">
-                          <div className="p-2 border-b border-slate-50 bg-slate-50/50">
+                          <div className="p-2 border-b border-slate-50 bg-slate-50/50 sticky top-0 z-10">
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-2">Found {villageResults.length} Locations</p>
                           </div>
                           {villageResults.map((v, idx) => (
@@ -475,6 +477,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                               </div>
                             </button>
                           ))}
+                        </div>
+                      )}
+
+                      {villageSearch.length >= 3 && !isSearching && villageResults.length === 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 p-6 text-center animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="bg-slate-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Search size={20} className="text-slate-300" />
+                          </div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No villages found</p>
+                          <p className="text-[9px] font-bold text-slate-300 mt-1">Try searching with a different name or pincode</p>
                         </div>
                       )}
                     </div>
