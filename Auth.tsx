@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search, X } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search, X, Loader2 } from 'lucide-react';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { UserProfile, UserRole, ServiceType, StoredAccount } from './types.ts';
@@ -19,6 +19,99 @@ const DEMO_RESIDENT = {
   name: 'Rahul Deshmukh',
   pass: 'pass123',
   village: 'Sukhawadi'
+};
+
+interface LocationResult {
+  Name: string;
+  Block: string;
+  District: string;
+  State: string;
+  Pincode: string;
+}
+
+const VillageSearch = ({ 
+  onSelect, 
+  t 
+}: { 
+  onSelect: (loc: LocationResult) => void,
+  t: (key: string) => string 
+}) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<LocationResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.length > 2) {
+        setIsSearching(true);
+        try {
+          const isPincode = /^\d+$/.test(query);
+          const url = isPincode 
+            ? `https://api.postalpincode.in/pincode/${query}`
+            : `https://api.postalpincode.in/postoffice/${query}`;
+            
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data && data[0] && data[0].Status === 'Success') {
+            setResults(data[0].PostOffice || []);
+            setShowDropdown(true);
+          } else {
+            setResults([]);
+          }
+        } catch (e) {
+          console.error(e);
+          setResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setResults([]);
+        setShowDropdown(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  return (
+    <div className="relative mb-4">
+      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+        <Search size={18} className="text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search Village or Pincode..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => { if (results.length > 0) setShowDropdown(true); }}
+          className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
+        />
+        {isSearching && <Loader2 size={16} className="text-emerald-500 animate-spin" />}
+      </div>
+      
+      {showDropdown && results.length > 0 && (
+        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+          {results.map((res, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => {
+                onSelect(res);
+                setQuery(`${res.Name}, ${res.District}`);
+                setShowDropdown(false);
+              }}
+              className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+            >
+              <p className="text-sm font-bold text-slate-800">{res.Name}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                {res.Block !== 'NA' ? res.Block + ', ' : ''}{res.District}, {res.State} - {res.Pincode}
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
@@ -355,29 +448,42 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             {!isLogin && (
               <div className="space-y-4 pt-4">
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('villageConnectivity')}</h3>
+                <VillageSearch 
+                  t={t}
+                  onSelect={(loc) => {
+                    setFormData({
+                      ...formData,
+                      state: loc.State || '',
+                      district: loc.District || '',
+                      subDistrict: (loc.Block && loc.Block !== 'NA') ? loc.Block : (loc.District || ''),
+                      village: loc.Name || '',
+                      pincode: loc.Pincode || ''
+                    });
+                  }}
+                />
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                       <Globe size={18} className="text-slate-400" />
-                      <input required placeholder={t('state')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} />
+                      <input required readOnly placeholder={t('state')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state || ''} />
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                       <Map size={18} className="text-slate-400" />
-                      <input required placeholder={t('district')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district} onChange={e => setFormData({...formData, district: e.target.value})} />
+                      <input required readOnly placeholder={t('district')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district || ''} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                       <Building2 size={18} className="text-slate-400" />
-                      <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
+                      <input required readOnly placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict || ''} />
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                       <MapPin size={18} className="text-slate-400" />
-                      <input required placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village} onChange={e => setFormData({...formData, village: e.target.value})} />
+                      <input required readOnly placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village || ''} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                     <Hash size={18} className="text-slate-400" />
-                    <input required placeholder={t('pincode')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} />
+                    <input required readOnly placeholder={t('pincode')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.pincode || ''} />
                   </div>
 
                 <div className="grid grid-cols-1 gap-3 pt-4">
