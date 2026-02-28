@@ -288,8 +288,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [billStatusFilter, setBillStatusFilter] = useState<'All' | 'Paid' | 'Unpaid'>('All');
 
   const dept = user.department;
+  const managedState = user.state;
+  const managedDistrict = user.district;
   const managedVillage = user.village;
   const managedTaluka = user.subDistrict;
+  const managedPincode = user.pincode;
 
   // Helper to strictly filter bill types per department
   const isBillTypeForDept = (type: BillType, currentDept?: ServiceType) => {
@@ -312,36 +315,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Citizens list filtered by search
   const villageCitizens = residents.filter(r => 
+    r.state === managedState &&
+    r.district === managedDistrict &&
     r.village === managedVillage && 
     r.subDistrict === managedTaluka &&
+    r.pincode === managedPincode &&
     (searchTerm === '' || r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const villageBusinesses = businesses.filter(b => b.village === managedVillage && b.subDistrict === managedTaluka);
+  const villageBusinesses = businesses.filter(b => 
+    b.state === managedState &&
+    b.district === managedDistrict &&
+    b.village === managedVillage && 
+    b.subDistrict === managedTaluka &&
+    b.pincode === managedPincode
+  );
 
   // Filtered requests with status and search
   const filteredRequests = requests.filter(r => 
-    (r.village === managedVillage && r.subDistrict === managedTaluka) &&
+    (r.state === managedState && r.district === managedDistrict && r.village === managedVillage && r.subDistrict === managedTaluka && r.pincode === managedPincode) &&
     (!dept || r.serviceId === dept) &&
     (requestStatusFilter === 'All' || r.status === requestStatusFilter) &&
     (searchTerm === '' || r.userName.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredTransactions = transactions.filter(t => 
-    (t.village === managedVillage && t.subDistrict === managedTaluka) &&
+    (t.state === managedState && t.district === managedDistrict && t.village === managedVillage && t.subDistrict === managedTaluka && t.pincode === managedPincode) &&
     isBillTypeForDept(t.type, dept) &&
     (searchTerm === '' || t.userName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Filtered bills with status and search
   const filteredBills = bills.filter(b => 
-    (b.village === managedVillage && b.subDistrict === managedTaluka) &&
+    (b.state === managedState && b.district === managedDistrict && b.village === managedVillage && b.subDistrict === managedTaluka && b.pincode === managedPincode) &&
     isBillTypeForDept(b.type, dept) &&
     (billStatusFilter === 'All' || b.status === billStatusFilter) &&
     (searchTerm === '' || b.userId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  const filteredNotices = notices.filter(n => n.village === managedVillage && n.subDistrict === managedTaluka);
+  const filteredNotices = notices.filter(n => 
+    n.state === managedState &&
+    n.district === managedDistrict &&
+    n.village === managedVillage && 
+    n.subDistrict === managedTaluka &&
+    n.pincode === managedPincode
+  );
 
   const [billingData, setBillingData] = useState({ 
     residentId: '', 
@@ -359,8 +377,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!noticeData.title || !noticeData.content) return;
     onIssueNotice({
       id: `NT-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      state: managedState,
+      district: managedDistrict,
       village: managedVillage,
       subDistrict: managedTaluka,
+      pincode: managedPincode,
       title: noticeData.title,
       content: noticeData.content,
       category: noticeData.category,
@@ -374,8 +395,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!bizNoticeData.title || !bizNoticeData.content) return;
     onIssueNotice({
       id: `NT-BIZ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      state: managedState,
+      district: managedDistrict,
       village: managedVillage,
       subDistrict: managedTaluka,
+      pincode: managedPincode,
       title: bizNoticeData.title,
       content: bizNoticeData.content,
       category: 'Business',
@@ -391,8 +415,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onIssueBill({
       id: `BL-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       userId: billingData.residentId,
+      state: managedState,
+      district: managedDistrict,
       village: managedVillage,
       subDistrict: managedTaluka,
+      pincode: managedPincode,
       type: billingData.type,
       amount: parseFloat(billingData.amount),
       description: billingData.description,
@@ -408,8 +435,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const newBiz: LocalBusiness = {
       ...bizData,
       id: `BZ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      state: managedState,
+      district: managedDistrict,
       village: managedVillage,
       subDistrict: managedTaluka,
+      pincode: managedPincode,
       status: 'Approved'
     };
     onUpdateBusinesses([...businesses, newBiz]);

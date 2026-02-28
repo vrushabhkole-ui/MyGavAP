@@ -23,8 +23,11 @@ export interface LocalBusiness {
   hours: string;
   description: string;
   ownerName: string;
+  state: string;
+  district: string;
   village: string;
   subDistrict: string;
+  pincode: string;
   status: 'Pending' | 'Approved';
   proof?: FileMetadata;
 }
@@ -37,8 +40,11 @@ export interface StoredAccount extends UserProfile {
 export interface Bill {
   id: string;
   userId: string;
+  state: string;
+  district: string;
   village: string;
   subDistrict: string;
+  pincode: string;
   type: BillType;
   amount: number;
   dueDate: string;
@@ -52,8 +58,11 @@ export interface Transaction {
   billId: string;
   userId: string;
   userName: string;
+  state: string;
+  district: string;
   village: string;
   subDistrict: string;
+  pincode: string;
   type: BillType;
   amount: number;
   recipient: string;
@@ -65,8 +74,11 @@ export interface Transaction {
 
 export interface VillageNotice {
   id: string;
+  state: string;
+  district: string;
   village: string;
   subDistrict: string;
+  pincode: string;
   title: string;
   content: string;
   category: 'General' | 'Water' | 'Electricity' | 'Meeting' | 'Business';
@@ -142,8 +154,11 @@ export interface ServiceRequest {
   id: string;
   userId: string;
   userName: string;
+  state: string;
+  district: string;
   village: string;
   subDistrict: string;
+  pincode: string;
   serviceId: ServiceType;
   serviceTitle: string;
   description: string;

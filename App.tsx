@@ -168,8 +168,11 @@ const App: React.FC = () => {
       id: `REQ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       userId: user.id,
       userName: user.name,
+      state: user.state,
+      district: user.district,
       village: user.village,
       subDistrict: user.subDistrict,
+      pincode: user.pincode,
       serviceId,
       serviceTitle: SERVICES.find(s => s.id === serviceId)?.title[language] || 'Service',
       description,
@@ -185,7 +188,14 @@ const App: React.FC = () => {
 
   const handleIssueNotice = (notice: VillageNotice) => {
     if (!user) return;
-    const scopedNotice = { ...notice, village: user.village, subDistrict: user.subDistrict };
+    const scopedNotice = { 
+      ...notice, 
+      state: user.state,
+      district: user.district,
+      village: user.village, 
+      subDistrict: user.subDistrict,
+      pincode: user.pincode
+    };
     setNotices(prev => [scopedNotice, ...prev]);
     addNotification('New Announcement', `Notice: ${notice.title} published.`, 'info');
   };
@@ -231,8 +241,11 @@ const App: React.FC = () => {
     const newBiz: LocalBusiness = {
       ...biz,
       id: `BZ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      state: user.state,
+      district: user.district,
       village: user.village,
       subDistrict: user.subDistrict,
+      pincode: user.pincode,
       status: 'Pending'
     };
     setBusinesses(prev => [...prev, newBiz]);
@@ -244,7 +257,13 @@ const App: React.FC = () => {
   if (!user) return <Auth onLogin={handleLogin} />;
 
   const activeService = SERVICES.find(s => s.id === activeServiceId);
-  const userNotices = notices.filter(n => n.village === user.village && n.subDistrict === user.subDistrict);
+  const userNotices = notices.filter(n => 
+    n.state === user.state &&
+    n.district === user.district &&
+    n.village === user.village && 
+    n.subDistrict === user.subDistrict &&
+    n.pincode === user.pincode
+  );
 
   return (
     <div className="max-w-md mx-auto bg-slate-50 h-[100dvh] relative shadow-2xl overflow-hidden flex flex-col">
@@ -271,7 +290,14 @@ const App: React.FC = () => {
             onUpdateBusinesses={handleUpdateBusinesses}
             onUpdateResidents={handleUpdateResidents}
             onUpdateStatus={updateRequestStatus} 
-            onIssueBill={(b) => setBills(prev => [{ ...b, village: user.village, subDistrict: user.subDistrict }, ...prev])} 
+            onIssueBill={(b) => setBills(prev => [{ 
+              ...b, 
+              state: user.state,
+              district: user.district,
+              village: user.village, 
+              subDistrict: user.subDistrict,
+              pincode: user.pincode
+            }, ...prev])} 
             onMarkBillPaid={(id) => {
               setBills(prev => prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b));
               const bill = bills.find(b => b.id === id);
@@ -281,8 +307,11 @@ const App: React.FC = () => {
                   billId: bill.id,
                   userId: bill.userId,
                   userName: residents.find(r => r.id === bill.userId)?.name || 'Resident',
+                  state: bill.state,
+                  district: bill.district,
                   village: bill.village,
                   subDistrict: bill.subDistrict,
+                  pincode: bill.pincode,
                   type: bill.type,
                   amount: bill.amount,
                   recipient: user.name, // Admin name

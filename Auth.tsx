@@ -64,106 +64,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     officerKey: ''
   });
 
-  const [villageSearch, setVillageSearch] = useState('');
-  const [villageResults, setVillageResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-
-  // Robust Village Search with Debounce
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (villageSearch.length < 3) {
-        setVillageResults([]);
-        setSelectedIndex(-1);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        // Detect if searching by Pincode or Name
-        const isPincode = /^\d{6}$/.test(villageSearch);
-        const endpoint = isPincode 
-          ? `https://api.postalpincode.in/pincode/${villageSearch}`
-          : `https://api.postalpincode.in/postoffice/${encodeURIComponent(villageSearch)}`;
-
-        const response = await fetch(endpoint);
-        const data = await response.json();
-        
-        if (data[0].Status === "Success") {
-          // Filter out duplicates and format results
-          const uniqueResults = data[0].PostOffice.reduce((acc: any[], curr: any) => {
-            const isDuplicate = acc.find(item => item.Name === curr.Name && item.Pincode === curr.Pincode);
-            if (!isDuplicate) acc.push(curr);
-            return acc;
-          }, []);
-          setVillageResults(uniqueResults);
-          setSelectedIndex(0); // Auto-focus first result
-        } else {
-          setVillageResults([]);
-          setSelectedIndex(-1);
-        }
-      } catch (e) {
-        console.error("Village search failed", e);
-        setVillageResults([]);
-        setSelectedIndex(-1);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [villageSearch]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (villageResults.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev < villageResults.length - 1 ? prev + 1 : prev));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedIndex >= 0) {
-        handleSelectVillage(villageResults[selectedIndex]);
-      }
-    } else if (e.key === 'Escape') {
-      setVillageResults([]);
-      setSelectedIndex(-1);
-    }
-  };
-
-  const highlightMatch = (text: string, query: string) => {
-    if (!query) return text;
-    const parts = text.split(new RegExp(`(${query})`, 'gi'));
-    return (
-      <span>
-        {parts.map((part, i) => 
-          part.toLowerCase() === query.toLowerCase() ? (
-            <span key={i} className="text-emerald-600 font-black underline decoration-emerald-200 underline-offset-2">{part}</span>
-          ) : (
-            part
-          )
-        )}
-      </span>
-    );
-  };
-
-  const handleSelectVillage = (v: any) => {
-    setFormData({
-      ...formData,
-      village: v.Name,
-      district: v.District,
-      state: v.State,
-      pincode: v.Pincode,
-      subDistrict: v.Block || v.Division || v.District // Block often corresponds to Taluka/Sub-district
-    });
-    setVillageSearch(v.Name);
-    setVillageResults([]);
-    setSelectedIndex(-1);
-  };
-
   const [error, setError] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
 
@@ -472,91 +372,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             {!isLogin && (
               <div className="space-y-4 pt-4">
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('villageConnectivity')}</h3>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Search Village / Area (Live Suggestions)</label>
-                    <div className="relative">
-                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
-                        <Search size={18} className="text-emerald-600" />
-                        <input 
-                          placeholder="Type village name or 6-digit pincode..." 
-                          className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
-                          value={villageSearch}
-                          onChange={(e) => setVillageSearch(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          onFocus={() => { if (villageSearch.length >= 3 && villageResults.length === 0) setVillageSearch(villageSearch); }}
-                        />
-                        {isSearching ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
-                        ) : villageSearch && (
-                          <button 
-                            type="button" 
-                            onClick={() => { setVillageSearch(''); setVillageResults([]); setSelectedIndex(-1); }}
-                            className="text-slate-300 hover:text-slate-500 p-1 hover:bg-slate-100 rounded-full transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-
-                      {villageSearch.length > 0 && villageSearch.length < 3 && !isSearching && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 p-4 text-center animate-in fade-in slide-in-from-top-2 duration-200">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type at least 3 characters to search</p>
-                        </div>
-                      )}
-
-                      {villageResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-64 overflow-y-auto scrollbar-hide animate-in slide-in-from-top-2 duration-200">
-                          <div className="p-2 border-b border-slate-50 bg-slate-50/50 sticky top-0 z-10">
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-2">Found {villageResults.length} Locations</p>
-                          </div>
-                          {villageResults.map((v, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => handleSelectVillage(v)}
-                              onMouseEnter={() => setSelectedIndex(idx)}
-                              className={`w-full px-5 py-4 text-left border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-all group ${
-                                selectedIndex === idx ? 'bg-emerald-50/80 ring-1 ring-inset ring-emerald-100' : 'hover:bg-emerald-50/50'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className={`text-sm font-black transition-colors ${
-                                  selectedIndex === idx ? 'text-emerald-800' : 'text-slate-800 group-hover:text-emerald-700'
-                                }`}>
-                                  {highlightMatch(v.Name, villageSearch)}
-                                </span>
-                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{v.Pincode}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                <span className="flex items-center gap-1"><Map size={10} /> {v.District}</span>
-                                <span>•</span>
-                                <span className="flex items-center gap-1"><Globe size={10} /> {v.State}</span>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {villageSearch.length >= 3 && !isSearching && villageResults.length === 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 p-6 text-center animate-in fade-in slide-in-from-top-2 duration-200">
-                          <div className="bg-slate-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Search size={20} className="text-slate-300" />
-                          </div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No villages found</p>
-                          <p className="text-[9px] font-bold text-slate-300 mt-1">Try searching with a different name or pincode</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                       <Globe size={18} className="text-slate-400" />
-                      <input readOnly placeholder={t('state')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state} />
+                      <input required placeholder={t('state')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} />
                     </div>
                     <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                       <Map size={18} className="text-slate-400" />
-                      <input readOnly placeholder={t('district')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district} />
+                      <input required placeholder={t('district')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district} onChange={e => setFormData({...formData, district: e.target.value})} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
