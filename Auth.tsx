@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search } from 'lucide-react';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { UserProfile, UserRole, ServiceType, StoredAccount } from './types.ts';
@@ -64,6 +64,46 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     officerKey: ''
   });
 
+  const [villageSearch, setVillageSearch] = useState('');
+  const [villageResults, setVillageResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const searchVillages = async (query: string) => {
+    if (query.length < 3) {
+      setVillageResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      // Using Indian Postal Pincode API for accurate village/pincode data
+      const response = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (data[0].Status === "Success") {
+        setVillageResults(data[0].PostOffice || []);
+      } else {
+        setVillageResults([]);
+      }
+    } catch (e) {
+      console.error("Village search failed", e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectVillage = (v: any) => {
+    setFormData({
+      ...formData,
+      village: v.Name,
+      district: v.District,
+      state: v.State,
+      pincode: v.Pincode,
+      subDistrict: v.Division || v.District // Division often corresponds to Taluka/Sub-district
+    });
+    setVillageSearch(v.Name);
+    setVillageResults([]);
+  };
+
   const [error, setError] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
 
@@ -115,28 +155,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       }
     }
   }, []);
-
-  const handleStateChange = (state: string) => {
-    const districts = (INDIA_LOCATIONS.districts as any)[state] || [];
-    const firstDist = districts[0] || '';
-    
-    setFormData({
-      ...formData,
-      state,
-      district: firstDist,
-      subDistrict: '',
-      village: ''
-    });
-  };
-
-  const handleDistrictChange = (district: string) => {
-    setFormData({
-      ...formData,
-      district,
-      subDistrict: '',
-      village: ''
-    });
-  };
 
   const saveToRegistry = (profile: UserProfile, password?: string) => {
     const stored: StoredAccount = { 
@@ -274,8 +292,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
   };
 
-  const currentDistricts = (INDIA_LOCATIONS.districts as any)[formData.state] || [];
-
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
       <div className="bg-white pt-10 pb-6 px-4 flex flex-col items-center gap-2 border-b border-slate-100 shadow-sm relative shrink-0">
@@ -357,28 +373,72 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             {!isLogin && (
               <div className="space-y-4 pt-4">
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('villageConnectivity')}</h3>
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <Globe size={18} className="text-slate-400" />
-                    <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state} onChange={e => handleStateChange(e.target.value)}>
-                      {INDIA_LOCATIONS.states.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Search Village / Area</label>
+                    <div className="relative">
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                        <Search size={18} className="text-emerald-600" />
+                        <input 
+                          placeholder="Type village name (e.g. Sukhawadi)..." 
+                          className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
+                          value={villageSearch}
+                          onChange={(e) => {
+                            setVillageSearch(e.target.value);
+                            searchVillages(e.target.value);
+                          }}
+                        />
+                        {isSearching && <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>}
+                      </div>
+
+                      {villageResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto scrollbar-hide">
+                          {villageResults.map((v, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleSelectVillage(v)}
+                              className="w-full px-5 py-4 text-left hover:bg-slate-50 border-b border-slate-50 last:border-0 flex flex-col gap-1"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-black text-slate-800">{v.Name}</span>
+                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{v.Pincode}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                <span>{v.District}</span>
+                                <span>•</span>
+                                <span>{v.State}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                      <Globe size={18} className="text-slate-400" />
+                      <input readOnly placeholder={t('state')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state} />
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                      <Map size={18} className="text-slate-400" />
+                      <input readOnly placeholder={t('district')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                      <Building2 size={18} className="text-slate-400" />
+                      <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                      <MapPin size={18} className="text-slate-400" />
+                      <input required placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village} onChange={e => setFormData({...formData, village: e.target.value})} />
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <Map size={18} className="text-slate-400" />
-                    <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district} onChange={e => handleDistrictChange(e.target.value)}>
-                      {currentDistricts.length > 0 ? currentDistricts.map((d: string) => <option key={d} value={d}>{d}</option>) : <option value="">{t('district')}</option>}
-                    </select>
+                    <Hash size={18} className="text-slate-400" />
+                    <input required placeholder={t('pincode')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} />
                   </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <Building2 size={18} className="text-slate-400" />
-                    <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
-                  </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <MapPin size={18} className="text-slate-400" />
-                    <input required placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village} onChange={e => setFormData({...formData, village: e.target.value})} />
-                  </div>
-                </div>
 
                 <div className="grid grid-cols-1 gap-3 pt-4">
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">

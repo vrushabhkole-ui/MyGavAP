@@ -60,17 +60,17 @@ const AnimatedIcon = ({ icon: Icon, type }: { icon: any, type: string }) => {
 };
 
 const WEATHER_CODES: Record<number, { label: Record<Language, string>; icon: any; type: string; color: string; isSevere?: boolean }> = {
-  0: { label: { en: 'Clear Sky', hi: 'साफ आसमान', mr: 'स्वच्छ आकाश' }, icon: Sun, type: 'sun', color: 'from-sky-400 to-blue-600' },
-  1: { label: { en: 'Mainly Clear', hi: 'मुख्य रूप से साफ', mr: 'मुख्यतः स्वच्छ' }, icon: Sun, type: 'sun', color: 'from-sky-300 to-blue-500' },
-  2: { label: { en: 'Partly Cloudy', hi: 'आंशिक रूप से बादल', mr: 'अंशतः ढगाळ' }, icon: Cloud, type: 'cloud', color: 'from-blue-400 to-indigo-600' },
-  3: { label: { en: 'Overcast', hi: 'बादल छाए रहेंगे', mr: 'पूर्णतः ढगाळ' }, icon: Cloud, type: 'cloud', color: 'from-slate-400 to-slate-600' },
-  45: { label: { en: 'Foggy', hi: 'धुंधला', mr: 'धुके' }, icon: Cloud, type: 'cloud', color: 'from-gray-400 to-gray-600' },
-  51: { label: { en: 'Light Drizzle', hi: 'हल्की बूंदाबांदी', mr: 'हलकी रिमझिम' }, icon: CloudRain, type: 'rain', color: 'from-slate-400 to-blue-500' },
-  61: { label: { en: 'Slight Rain', hi: 'हल्की बारिश', mr: 'अल्प पाऊस' }, icon: CloudRain, type: 'rain', color: 'from-slate-500 to-blue-600' },
-  80: { label: { en: 'Rain Showers', hi: 'बारिश की बौछारें', mr: 'पावसाच्या सरी' }, icon: CloudRain, type: 'rain', color: 'from-blue-600 to-indigo-800' },
-  95: { label: { en: 'Thunderstorm', hi: 'गरज के साथ बौछारें', mr: 'विजांसह पाऊस' }, icon: CloudLightning, type: 'lightning', color: 'from-indigo-900 via-purple-900 to-slate-900', isSevere: true },
-  96: { label: { en: 'Thunderstorm with Hail', hi: 'ओलों के साथ तूफान', mr: 'गारांसह वादळ' }, icon: CloudLightning, type: 'lightning', color: 'from-purple-900 to-black', isSevere: true },
-  99: { label: { en: 'Heavy Thunderstorm', hi: 'भारी तूफान', mr: 'मुसळधार वादळ' }, icon: CloudLightning, type: 'lightning', color: 'from-rose-950 via-purple-950 to-black', isSevere: true },
+  0: { label: { en: 'Clear Sky', hi: 'साफ आसमान', mr: 'स्वच्छ आकाश' }, icon: Sun, type: 'sun', color: 'from-cyan-400 via-blue-500 to-indigo-600' },
+  1: { label: { en: 'Mainly Clear', hi: 'मुख्य रूप से साफ', mr: 'मुख्यतः स्वच्छ' }, icon: Sun, type: 'sun', color: 'from-sky-400 via-blue-400 to-blue-600' },
+  2: { label: { en: 'Partly Cloudy', hi: 'आंशिक रूप से बादल', mr: 'अंशतः ढगाळ' }, icon: Cloud, type: 'cloud', color: 'from-blue-500 via-indigo-500 to-purple-600' },
+  3: { label: { en: 'Overcast', hi: 'बादल छाए रहेंगे', mr: 'पूर्णतः ढगाळ' }, icon: Cloud, type: 'cloud', color: 'from-slate-500 via-gray-600 to-slate-800' },
+  45: { label: { en: 'Foggy', hi: 'धुंधला', mr: 'धुके' }, icon: Cloud, type: 'cloud', color: 'from-zinc-500 via-slate-600 to-zinc-800' },
+  51: { label: { en: 'Light Drizzle', hi: 'हल्की बूंदाबांदी', mr: 'हलकी रिमझिम' }, icon: CloudRain, type: 'rain', color: 'from-blue-400 via-slate-500 to-slate-700' },
+  61: { label: { en: 'Slight Rain', hi: 'हल्की बारिश', mr: 'अल्प पाऊस' }, icon: CloudRain, type: 'rain', color: 'from-blue-600 via-indigo-700 to-slate-900' },
+  80: { label: { en: 'Rain Showers', hi: 'बारिश की बौछारें', mr: 'पावसाच्या सरी' }, icon: CloudRain, type: 'rain', color: 'from-blue-700 via-blue-900 to-black' },
+  95: { label: { en: 'Thunderstorm', hi: 'गरज के साथ बौछारें', mr: 'विजांसह पाऊस' }, icon: CloudLightning, type: 'lightning', color: 'from-fuchsia-900 via-purple-900 to-slate-900', isSevere: true },
+  96: { label: { en: 'Thunderstorm with Hail', hi: 'ओलों के साथ तूफान', mr: 'गारांसह वादळ' }, icon: CloudLightning, type: 'lightning', color: 'from-violet-950 via-purple-900 to-black', isSevere: true },
+  99: { label: { en: 'Heavy Thunderstorm', hi: 'भारी तूफान', mr: 'मुसळधार वादळ' }, icon: CloudLightning, type: 'lightning', color: 'from-rose-900 via-purple-950 to-black', isSevere: true },
 };
 
 const getDayName = (dateStr: string, lang: Language) => {
@@ -96,7 +96,6 @@ const LiveWeather: React.FC<LiveWeatherProps> = ({ village, lang, isExpanded, on
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: true 
   });
 
