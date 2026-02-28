@@ -27,6 +27,7 @@ interface LocationResult {
   District: string;
   State: string;
   Pincode: string;
+  Division?: string;
 }
 
 const VillageSearch = ({ 
@@ -86,6 +87,19 @@ const VillageSearch = ({
           onFocus={() => { if (results.length > 0) setShowDropdown(true); }}
           className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
         />
+        {query.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('');
+              setResults([]);
+              setShowDropdown(false);
+            }}
+            className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+          >
+            <X size={16} className="text-slate-400" />
+          </button>
+        )}
         {isSearching && <Loader2 size={16} className="text-emerald-500 animate-spin" />}
       </div>
       
@@ -95,16 +109,32 @@ const VillageSearch = ({
             <button
               key={idx}
               type="button"
-              onClick={() => {
-                onSelect(res);
-                setQuery(`${res.Name}, ${res.District}`);
+              onClick={async () => {
                 setShowDropdown(false);
+                setQuery(`${res.Name}, ${res.District}, ${res.State} - ${res.Pincode}`);
+                let finalLoc = { ...res };
+                if (!finalLoc.Block || finalLoc.Block === 'NA') {
+                  try {
+                    const pinRes = await fetch(`https://api.postalpincode.in/pincode/${res.Pincode}`);
+                    const pinData = await pinRes.json();
+                    if (pinData && pinData[0] && pinData[0].Status === 'Success') {
+                      const match = pinData[0].PostOffice.find((po: any) => po.Name === res.Name) || pinData[0].PostOffice[0];
+                      if (match && match.Block && match.Block !== 'NA') {
+                        finalLoc.Block = match.Block;
+                      }
+                    }
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }
+                onSelect(finalLoc);
+                setQuery(`${finalLoc.Name}, ${(finalLoc.Block && finalLoc.Block !== 'NA') ? finalLoc.Block + ', ' : (finalLoc.Division && finalLoc.Division !== 'NA' ? finalLoc.Division + ', ' : '')}${finalLoc.District}, ${finalLoc.State} - ${finalLoc.Pincode}`);
               }}
               className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
             >
               <p className="text-sm font-bold text-slate-800">{res.Name}</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
-                {res.Block !== 'NA' ? res.Block + ', ' : ''}{res.District}, {res.State} - {res.Pincode}
+                State: {res.State} • District: {res.District} • Subdistrict: {(res.Block && res.Block !== 'NA') ? res.Block : (res.Division && res.Division !== 'NA' ? res.Division : 'N/A')} • Pincode: {res.Pincode}
               </p>
             </button>
           ))}
@@ -455,7 +485,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                       ...formData,
                       state: loc.State || '',
                       district: loc.District || '',
-                      subDistrict: (loc.Block && loc.Block !== 'NA') ? loc.Block : (loc.District || ''),
+                      subDistrict: (loc.Block && loc.Block !== 'NA') ? loc.Block : (loc.Division && loc.Division !== 'NA' ? loc.Division : ''),
                       village: loc.Name || '',
                       pincode: loc.Pincode || ''
                     });
@@ -472,9 +502,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                       <Building2 size={18} className="text-slate-400" />
-                      <input required readOnly placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict || ''} />
+                      <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict || ''} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
                     </div>
                     <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                       <MapPin size={18} className="text-slate-400" />
