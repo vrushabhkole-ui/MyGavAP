@@ -67,28 +67,44 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [villageSearch, setVillageSearch] = useState('');
   const [villageResults, setVillageResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const searchVillages = async (query: string) => {
+  const searchVillages = (query: string) => {
+    setVillageSearch(query);
+    
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
     if (query.length < 3) {
       setVillageResults([]);
       return;
     }
-    setIsSearching(true);
-    try {
-      // Using Indian Postal Pincode API for accurate village/pincode data
-      const response = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(query)}`);
-      const data = await response.json();
-      
-      if (data[0].Status === "Success") {
-        setVillageResults(data[0].PostOffice || []);
-      } else {
-        setVillageResults([]);
+
+    const timeout = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        // Using Indian Postal Pincode API for accurate village/pincode data
+        const response = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data[0].Status === "Success") {
+          // Filter out duplicates and format results
+          const uniqueResults = data[0].PostOffice.reduce((acc: any[], curr: any) => {
+            const isDuplicate = acc.find(item => item.Name === curr.Name && item.Pincode === curr.Pincode);
+            if (!isDuplicate) acc.push(curr);
+            return acc;
+          }, []);
+          setVillageResults(uniqueResults);
+        } else {
+          setVillageResults([]);
+        }
+      } catch (e) {
+        console.error("Village search failed", e);
+      } finally {
+        setIsSearching(false);
       }
-    } catch (e) {
-      console.error("Village search failed", e);
-    } finally {
-      setIsSearching(false);
-    }
+    }, 600); // 600ms debounce
+
+    setSearchTimeout(timeout);
   };
 
   const handleSelectVillage = (v: any) => {
@@ -98,7 +114,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       district: v.District,
       state: v.State,
       pincode: v.Pincode,
-      subDistrict: v.Division || v.District // Division often corresponds to Taluka/Sub-district
+      subDistrict: v.Block || v.Division || v.District // Block often corresponds to Taluka/Sub-district
     });
     setVillageSearch(v.Name);
     setVillageResults([]);
@@ -413,39 +429,49 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               <div className="space-y-4 pt-4">
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('villageConnectivity')}</h3>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Search Village / Area</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Search Village / Area (Live Suggestions)</label>
                     <div className="relative">
-                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                         <Search size={18} className="text-emerald-600" />
                         <input 
                           placeholder="Type village name (e.g. Sukhawadi)..." 
                           className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
                           value={villageSearch}
-                          onChange={(e) => {
-                            setVillageSearch(e.target.value);
-                            searchVillages(e.target.value);
-                          }}
+                          onChange={(e) => searchVillages(e.target.value)}
                         />
-                        {isSearching && <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>}
+                        {isSearching ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
+                        ) : villageSearch && (
+                          <button 
+                            type="button" 
+                            onClick={() => { setVillageSearch(''); setVillageResults([]); }}
+                            className="text-slate-300 hover:text-slate-500"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
 
                       {villageResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto scrollbar-hide">
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-64 overflow-y-auto scrollbar-hide animate-in slide-in-from-top-2 duration-200">
+                          <div className="p-2 border-b border-slate-50 bg-slate-50/50">
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-2">Found {villageResults.length} Locations</p>
+                          </div>
                           {villageResults.map((v, idx) => (
                             <button
                               key={idx}
                               type="button"
                               onClick={() => handleSelectVillage(v)}
-                              className="w-full px-5 py-4 text-left hover:bg-slate-50 border-b border-slate-50 last:border-0 flex flex-col gap-1"
+                              className="w-full px-5 py-4 text-left hover:bg-emerald-50/50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors group"
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-black text-slate-800">{v.Name}</span>
-                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{v.Pincode}</span>
+                                <span className="text-sm font-black text-slate-800 group-hover:text-emerald-700">{v.Name}</span>
+                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{v.Pincode}</span>
                               </div>
                               <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                <span>{v.District}</span>
+                                <span className="flex items-center gap-1"><Map size={10} /> {v.District}</span>
                                 <span>•</span>
-                                <span>{v.State}</span>
+                                <span className="flex items-center gap-1"><Globe size={10} /> {v.State}</span>
                               </div>
                             </button>
                           ))}
