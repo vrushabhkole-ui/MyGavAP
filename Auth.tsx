@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search, X } from 'lucide-react';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { UserProfile, UserRole, ServiceType, StoredAccount } from './types.ts';
@@ -67,12 +67,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [villageSearch, setVillageSearch] = useState('');
   const [villageResults, setVillageResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   // Robust Village Search with Debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (villageSearch.length < 3) {
         setVillageResults([]);
+        setSelectedIndex(-1);
         return;
       }
 
@@ -95,12 +97,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             return acc;
           }, []);
           setVillageResults(uniqueResults);
+          setSelectedIndex(0); // Auto-focus first result
         } else {
           setVillageResults([]);
+          setSelectedIndex(-1);
         }
       } catch (e) {
         console.error("Village search failed", e);
         setVillageResults([]);
+        setSelectedIndex(-1);
       } finally {
         setIsSearching(false);
       }
@@ -108,6 +113,42 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
     return () => clearTimeout(delayDebounceFn);
   }, [villageSearch]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (villageResults.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < villageResults.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        handleSelectVillage(villageResults[selectedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setVillageResults([]);
+      setSelectedIndex(-1);
+    }
+  };
+
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return text;
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return (
+      <span>
+        {parts.map((part, i) => 
+          part.toLowerCase() === query.toLowerCase() ? (
+            <span key={i} className="text-emerald-600 font-black underline decoration-emerald-200 underline-offset-2">{part}</span>
+          ) : (
+            part
+          )
+        )}
+      </span>
+    );
+  };
 
   const handleSelectVillage = (v: any) => {
     setFormData({
@@ -120,6 +161,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     });
     setVillageSearch(v.Name);
     setVillageResults([]);
+    setSelectedIndex(-1);
   };
 
   const [error, setError] = useState('');
@@ -440,19 +482,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                           className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
                           value={villageSearch}
                           onChange={(e) => setVillageSearch(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          onFocus={() => { if (villageSearch.length >= 3 && villageResults.length === 0) setVillageSearch(villageSearch); }}
                         />
                         {isSearching ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
                         ) : villageSearch && (
                           <button 
                             type="button" 
-                            onClick={() => { setVillageSearch(''); setVillageResults([]); }}
-                            className="text-slate-300 hover:text-slate-500"
+                            onClick={() => { setVillageSearch(''); setVillageResults([]); setSelectedIndex(-1); }}
+                            className="text-slate-300 hover:text-slate-500 p-1 hover:bg-slate-100 rounded-full transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <X size={14} />
                           </button>
                         )}
                       </div>
+
+                      {villageSearch.length > 0 && villageSearch.length < 3 && !isSearching && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 p-4 text-center animate-in fade-in slide-in-from-top-2 duration-200">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type at least 3 characters to search</p>
+                        </div>
+                      )}
 
                       {villageResults.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-64 overflow-y-auto scrollbar-hide animate-in slide-in-from-top-2 duration-200">
@@ -464,10 +514,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                               key={idx}
                               type="button"
                               onClick={() => handleSelectVillage(v)}
-                              className="w-full px-5 py-4 text-left hover:bg-emerald-50/50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors group"
+                              onMouseEnter={() => setSelectedIndex(idx)}
+                              className={`w-full px-5 py-4 text-left border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-all group ${
+                                selectedIndex === idx ? 'bg-emerald-50/80 ring-1 ring-inset ring-emerald-100' : 'hover:bg-emerald-50/50'
+                              }`}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-black text-slate-800 group-hover:text-emerald-700">{v.Name}</span>
+                                <span className={`text-sm font-black transition-colors ${
+                                  selectedIndex === idx ? 'text-emerald-800' : 'text-slate-800 group-hover:text-emerald-700'
+                                }`}>
+                                  {highlightMatch(v.Name, villageSearch)}
+                                </span>
                                 <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{v.Pincode}</span>
                               </div>
                               <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
