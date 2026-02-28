@@ -6,8 +6,8 @@ import {
   Calendar, Info, Hash, FileText, ArrowRight, ShieldCheck, Download,
   CheckCircle, History, BadgeCheck
 } from 'lucide-react';
-import { ServiceInfo, Language, Bill, ServiceType, BillType } from '../types';
-import { getIcon, DICTIONARY } from '../constants';
+import { ServiceInfo, Language, Bill, ServiceType, BillType } from '../types.ts';
+import { getIcon, DICTIONARY } from '../constants.tsx';
 
 interface ServiceDetailProps {
   lang: Language;

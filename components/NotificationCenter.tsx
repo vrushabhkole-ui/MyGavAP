@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ChevronLeft, CheckCircle2, AlertCircle, Info, Trash2 } from 'lucide-react';
-import { AppNotification } from '../types';
+import { AppNotification } from '../types.ts';
 
 interface NotificationCenterProps {
   notifications: AppNotification[];

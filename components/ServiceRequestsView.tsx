@@ -6,7 +6,7 @@ import {
   MapPin, Phone, Calendar, User, Eye, CheckCircle, Building, Hash,
   UploadCloud, UserCheck, FileBadge, ClipboardList
 } from 'lucide-react';
-import MaharashtraEmblem from './MaharashtraEmblem';
+import MaharashtraEmblem from './MaharashtraEmblem.tsx';
 import { ServiceRequest, RequestStatus, ServiceType, Language, CertificateData, FileMetadata } from '../types.ts';
 import { SERVICES, DICTIONARY } from '../constants.tsx';
 

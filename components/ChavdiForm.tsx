@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { ChevronLeft, FileText, Send, MapPin, Hash, User, Building, UploadCloud, CheckCircle, Info, ArrowRight } from 'lucide-react';
-import { Language, ServiceType, FileMetadata } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language, ServiceType, FileMetadata } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface ChavdiFormProps {
   lang: Language;

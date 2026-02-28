@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Cloud, CloudRain, CloudLightning, Wind, Droplets, Thermometer, MapPin, RefreshCw, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Language } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface WeatherAlert {
   type: 'Severe' | 'Warning' | 'Info';

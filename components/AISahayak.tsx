@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Loader2, Info, Trash2 } from 'lucide-react';
-import { getChatResponse } from '../services/gemini';
-import { ChatMessage, Language } from '../types';
-import { DICTIONARY } from '../constants';
+import { getChatResponse } from '../services/gemini.ts';
+import { ChatMessage, Language } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 const STORAGE_KEY = 'mygaav_chat_history';
 

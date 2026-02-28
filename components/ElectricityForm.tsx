@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, Zap, Send, Hash, Phone, FileText } from 'lucide-react';
-import { Language, ServiceType } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language, ServiceType } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface ElectricityFormProps {
   lang: Language;

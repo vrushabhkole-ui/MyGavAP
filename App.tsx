@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Home, Bot, Grid, User, Info, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard.tsx';
 import AISahayak from './components/AISahayak.tsx';
-import Auth, { USER_REGISTRY_KEY } from './Auth.tsx';
+import Auth from './Auth.tsx';
 import ServiceRequestsView from './components/ServiceRequestsView.tsx';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import ServiceDetail from './components/ServiceDetail.tsx';
@@ -26,12 +26,6 @@ import {
 import { DICTIONARY, SERVICES } from './constants.tsx';
 
 const ONBOARDING_KEY = 'mygaav_onboarding_completed';
-const REQUESTS_KEY = 'MYGAAV_REQUESTS_REGISTRY';
-const BILLS_KEY = 'MYGAAV_BILLS_REGISTRY';
-const TXNS_KEY = 'MYGAAV_TRANSACTIONS_REGISTRY';
-const NOTICES_KEY = 'MYGAAV_NOTICES_REGISTRY';
-const NOTIFS_KEY = 'MYGAAV_NOTIFICATIONS_REGISTRY';
-const BIZ_KEY = 'MYGAAV_BUSINESS_REGISTRY';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -52,6 +46,21 @@ const App: React.FC = () => {
   const [businesses, setBusinesses] = useState<LocalBusiness[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedVillages, setSelectedVillages] = useState<string[]>([]);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+
+  // Persistence Helpers
+  const syncToServer = async (path: string, data: any) => {
+    if (!isInitialLoadComplete) return;
+    try {
+      await fetch(`/api/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    } catch (e) {
+      console.error(`Failed to sync ${path}`, e);
+    }
+  };
 
   useEffect(() => {
     if (user && selectedVillages.length === 0) {
@@ -59,30 +68,13 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // Persistence
-  useEffect(() => {
-    if (requests.length > 0) localStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
-  }, [requests]);
-
-  useEffect(() => {
-    if (bills.length > 0) localStorage.setItem(BILLS_KEY, JSON.stringify(bills));
-  }, [bills]);
-
-  useEffect(() => {
-    if (transactions.length > 0) localStorage.setItem(TXNS_KEY, JSON.stringify(transactions));
-  }, [transactions]);
-
-  useEffect(() => {
-    if (notices.length > 0) localStorage.setItem(NOTICES_KEY, JSON.stringify(notices));
-  }, [notices]);
-
-  useEffect(() => {
-    if (notifications.length > 0) localStorage.setItem(NOTIFS_KEY, JSON.stringify(notifications));
-  }, [notifications]);
-
-  useEffect(() => {
-    if (businesses.length > 0) localStorage.setItem(BIZ_KEY, JSON.stringify(businesses));
-  }, [businesses]);
+  // Sync to Server Effects
+  useEffect(() => { syncToServer('requests', requests); }, [requests]);
+  useEffect(() => { syncToServer('bills', bills); }, [bills]);
+  useEffect(() => { syncToServer('transactions', transactions); }, [transactions]);
+  useEffect(() => { syncToServer('notices', notices); }, [notices]);
+  useEffect(() => { syncToServer('notifications', notifications); }, [notifications]);
+  useEffect(() => { syncToServer('businesses', businesses); }, [businesses]);
 
   useEffect(() => {
     if (user) {
@@ -92,31 +84,16 @@ const App: React.FC = () => {
     }
   }, [currentView, user]);
 
-  const loadResidentsFromStorage = () => {
-    const stored = localStorage.getItem(USER_REGISTRY_KEY);
-    let allResidents: UserProfile[] = [];
-    if (stored) {
-      try {
-        const allUsers = JSON.parse(stored) as UserProfile[];
-        allResidents = allUsers.filter(u => u.role === 'user');
-      } catch (e) { console.error(e); }
+  const loadResidentsFromServer = async () => {
+    try {
+      const response = await fetch('/api/accounts');
+      if (response.ok) {
+        const allUsers = await response.json() as UserProfile[];
+        setResidents(allUsers.filter(u => u.role === 'user'));
+      }
+    } catch (e) {
+      console.error("Failed to load residents", e);
     }
-    
-    if (allResidents.length === 0) {
-      allResidents = [{
-        id: 'DEMO-RES-1',
-        name: 'Rahul Deshmukh',
-        email: 'resident@mygaav.com',
-        state: 'Maharashtra',
-        district: 'Pune',
-        subDistrict: 'Haveli',
-        village: 'Sukhawadi',
-        role: 'user',
-        joinedAt: 'System Default',
-        status: 'approved'
-      }];
-    }
-    setResidents(allResidents);
   };
 
   useEffect(() => {
@@ -133,40 +110,38 @@ const App: React.FC = () => {
       } catch (e) { console.error(e); }
     }
 
-    loadResidentsFromStorage();
-
-    const loadStored = (key: string, setter: Function, defaults: any[]) => {
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        try { setter(JSON.parse(stored)); } catch (e) { setter(defaults); }
-      } else {
-        setter(defaults);
+    const loadFromServer = async (path: string, setter: Function) => {
+      try {
+        const response = await fetch(`/api/${path}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) setter(data);
+        }
+      } catch (e) {
+        console.error(`Failed to load ${path}`, e);
       }
     };
 
-    loadStored(REQUESTS_KEY, setRequests, []);
-    loadStored(TXNS_KEY, setTransactions, []);
-    loadStored(NOTIFS_KEY, setNotifications, []);
-    loadStored(BIZ_KEY, setBusinesses, [
-      { id: 'BZ-1', name: 'Shree Grocery Store', category: 'Grocery', contact: '9876543210', hours: '8 AM - 9 PM', description: 'Fresh farm produce and daily essentials.', ownerName: 'Rahul Deshmukh', village: 'Sukhawadi', subDistrict: 'Haveli', status: 'Approved' },
-      { id: 'BZ-2', name: 'Mauli Hair Salon', category: 'Salon', contact: '9876543211', hours: '9 AM - 8 PM', description: 'Modern hair styling and grooming services.', ownerName: 'Sanjay Pawar', village: 'Sukhawadi', subDistrict: 'Haveli', status: 'Approved' }
-    ]);
-    
-    loadStored(BILLS_KEY, setBills, [
-      { id: 'BL-9921', userId: 'DEMO-RES-1', village: 'Sukhawadi', subDistrict: 'Haveli', type: 'Home Tax', amount: 1250, dueDate: '25 Dec 2023', issuedAt: '01 Dec 2023', status: 'Unpaid', description: 'Property tax for Financial Year 2023-24' },
-      { id: 'BL-8812', userId: 'DEMO-RES-1', village: 'Sukhawadi', subDistrict: 'Haveli', type: 'Water', amount: 450, dueDate: '20 Dec 2023', issuedAt: '05 Dec 2023', status: 'Unpaid', description: 'Monthly water consumption charges' }
-    ]);
-    
-    loadStored(NOTICES_KEY, setNotices, [
-      { id: 'N1', village: 'Sukhawadi', subDistrict: 'Haveli', title: 'Monthly Gram Sabha', content: 'Discussion on new water supply project and road maintenance.', category: 'Meeting', date: '20 Oct 2023' },
-      { id: 'N2', village: 'Sukhawadi', subDistrict: 'Haveli', title: 'Power Maintenance', content: 'Scheduled power cut on Sunday for substation cleaning.', category: 'Electricity', date: '18 Oct 2023' }
-    ]);
+    const loadAll = async () => {
+      await Promise.all([
+        loadResidentsFromServer(),
+        loadFromServer('requests', setRequests),
+        loadFromServer('transactions', setTransactions),
+        loadFromServer('notifications', setNotifications),
+        loadFromServer('businesses', setBusinesses),
+        loadFromServer('bills', setBills),
+        loadFromServer('notices', setNotices)
+      ]);
+      setIsInitialLoadComplete(true);
+    };
+
+    loadAll();
   }, []);
 
   const handleLogin = (profile: UserProfile) => {
     setUser(profile);
     localStorage.setItem('mygaav_active_session', JSON.stringify(profile));
-    loadResidentsFromStorage();
+    loadResidentsFromServer();
 
     if (profile.role === 'user') {
       const completed = localStorage.getItem(`${ONBOARDING_KEY}_${profile.id}`);
@@ -234,18 +209,20 @@ const App: React.FC = () => {
     addNotification('Directory Updated', 'Local business registry has been updated.', 'info');
   };
 
-  const handleUpdateResidents = (updatedResidents: UserProfile[]) => {
+  const handleUpdateResidents = async (updatedResidents: UserProfile[]) => {
     setResidents(updatedResidents);
-    const stored = localStorage.getItem(USER_REGISTRY_KEY);
-    if (stored) {
-      try {
-        const allUsers = JSON.parse(stored) as UserProfile[];
+    try {
+      const response = await fetch('/api/accounts');
+      if (response.ok) {
+        const allUsers = await response.json() as UserProfile[];
         const newAllUsers = allUsers.map(u => {
           const found = updatedResidents.find(r => r.id === u.id);
           return found ? { ...u, ...found } : u;
         });
-        localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(newAllUsers));
-      } catch (e) { console.error(e); }
+        await syncToServer('accounts', newAllUsers);
+      }
+    } catch (e) {
+      console.error("Failed to update residents", e);
     }
   };
 

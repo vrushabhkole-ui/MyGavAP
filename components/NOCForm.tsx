@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { ChevronLeft, FileText, Send, Building, Home, Droplets, Zap, ShoppingBag, Edit3, UploadCloud, CheckCircle, Hash } from 'lucide-react';
-import { Language, ServiceType, FileMetadata } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language, ServiceType, FileMetadata } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface NOCFormProps {
   lang: Language;

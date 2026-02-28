@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, Flame, Send, Hash, Phone, User, MapPin, CreditCard, Box } from 'lucide-react';
-import { Language, ServiceType } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language, ServiceType } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface GasFormProps {
   lang: Language;

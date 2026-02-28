@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { ChevronLeft, FileText, Send, Calendar, User, Phone, MapPin, UploadCloud, CheckCircle } from 'lucide-react';
-import { Language, ServiceType, FileMetadata } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language, ServiceType, FileMetadata } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface CertificateFormProps {
   lang: Language;

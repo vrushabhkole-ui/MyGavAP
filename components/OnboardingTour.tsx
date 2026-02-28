@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { ChevronRight, X, Bot, Building2, Grid, CheckCircle2, Sparkles, MapPin } from 'lucide-react';
-import { Language } from '../types';
-import { DICTIONARY } from '../constants';
-import Logo from './Logo';
+import { Language } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
+import Logo from './Logo.tsx';
 
 interface OnboardingTourProps {
   lang: Language;

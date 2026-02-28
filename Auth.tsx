@@ -156,7 +156,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     // Fetch accounts from backend
     const fetchAccounts = async () => {
       try {
-        const response = await fetch('/api/auth/accounts');
+        const response = await fetch('/api/accounts');
         if (response.ok) {
           const data = await response.json();
           setSavedAccounts(data);
@@ -241,7 +241,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     // Re-fetch accounts to ensure we have the latest
     let currentAccounts = savedAccounts;
     try {
-      const resp = await fetch('/api/auth/accounts');
+      const resp = await fetch('/api/accounts');
       if (resp.ok) {
         currentAccounts = await resp.json();
         setSavedAccounts(currentAccounts);

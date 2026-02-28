@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, HeartPulse, Send, User, Phone, Calendar, Info, Activity } from 'lucide-react';
-import { Language, ServiceType } from '../types';
-import { DICTIONARY } from '../constants';
+import { Language, ServiceType } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface HealthFormProps {
   lang: Language;

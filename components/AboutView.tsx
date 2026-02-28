@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Mail, ShieldCheck, User, Code, Info, Download, Globe, Share2 } from 'lucide-react';
-import Logo from './Logo';
-import MaharashtraEmblem from './MaharashtraEmblem';
-import { Language } from '../types';
-import { DICTIONARY } from '../constants';
+import Logo from './Logo.tsx';
+import MaharashtraEmblem from './MaharashtraEmblem.tsx';
+import { Language } from '../types.ts';
+import { DICTIONARY } from '../constants.tsx';
 
 interface AboutViewProps {
   lang: Language;
