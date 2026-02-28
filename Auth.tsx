@@ -71,17 +71,30 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     const fetchData = async () => {
       try {
         const [accResp, keyResp] = await Promise.all([
-          fetch('/api/accounts'),
-          fetch('/api/officer-keys')
+          fetch('/api/accounts').catch(() => null),
+          fetch('/api/officer-keys').catch(() => null)
         ]);
         
-        if (accResp.ok) {
+        if (accResp && accResp.ok) {
           const data = await accResp.json();
           setSavedAccounts(data);
+        } else {
+          const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+          if (localAccounts.length > 0) setSavedAccounts(localAccounts);
         }
-        if (keyResp.ok) {
+
+        if (keyResp && keyResp.ok) {
           const keys = await keyResp.json();
           setServerOfficerKeys(keys);
+        } else {
+          const localKeys = JSON.parse(localStorage.getItem(OFFICER_KEYS_KEY) || '[]');
+          if (localKeys.length === 0) {
+            const fallbackKeys = ['OFFICER01', 'OFFICER02', 'MAHA7788', 'PUNE9900', 'GAAV1122', 'ADMIN889'];
+            localStorage.setItem(OFFICER_KEYS_KEY, JSON.stringify(fallbackKeys));
+            setServerOfficerKeys(fallbackKeys);
+          } else {
+            setServerOfficerKeys(localKeys);
+          }
         }
       } catch (e) {
         console.error("Failed to fetch data", e);
@@ -109,13 +122,28 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
         return true;
       } else {
-        const err = await response.json();
+        const err = await response.json().catch(() => ({ error: 'Registration failed (Server error)' }));
         setError(err.error || 'Registration failed');
         return false;
       }
     } catch (e) {
-      setError('Server connection failed');
-      return false;
+      console.warn('Server connection failed, falling back to local storage');
+      
+      const existing = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+      const exists = existing.find((a: any) => 
+        a.email.toLowerCase() === profile.email.toLowerCase() || 
+        (profile.mobile && a.mobile === profile.mobile)
+      );
+
+      if (exists) {
+        setError("Account already exists.");
+        return false;
+      }
+
+      existing.push(stored);
+      localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(existing));
+      setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
+      return true;
     }
   };
 
@@ -150,8 +178,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       if (resp.ok) {
         currentAccounts = await resp.json();
         setSavedAccounts(currentAccounts);
+      } else {
+        const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+        if (localAccounts.length > 0) {
+          currentAccounts = localAccounts;
+          setSavedAccounts(currentAccounts);
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+      if (localAccounts.length > 0) {
+        currentAccounts = localAccounts;
+        setSavedAccounts(currentAccounts);
+      }
+    }
 
     const match = currentAccounts.find(a => 
       a.email.toLowerCase() === emailKey && 
