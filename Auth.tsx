@@ -14,23 +14,6 @@ export const USER_REGISTRY_KEY = 'MYGAAV_USER_REGISTRY';
 const OFFICER_KEYS_KEY = 'MYGAAV_OFFICER_KEYS';
 const COLORS = ['bg-emerald-600', 'bg-indigo-600', 'bg-amber-600', 'bg-rose-600', 'bg-blue-600', 'bg-orange-600'];
 
-// Permanent Officer Keys saved in App Data
-const PERMANENT_OFFICER_KEYS = [
-  'OFFICER01', 'OFFICER02', 'OFFICER03', 'OFFICER04', 'OFFICER05',
-  'MAHA7788', 'PUNE9900', 'GAAV1122', 'FIELD556', 'ADMIN889',
-  'KEY2024X', 'KEY2025Y', 'VILLAGE1', 'GAAVHUB9',
-  'K8J2M4P9', 'L7N3Q5R1', 'B6V9X2Z4', 'H1G5F8D3', 'S0A2W4E6'
-];
-
-const SYSTEM_ADMINS: Record<string, { name: string, dept: ServiceType, pass: string, icon: any, color: string, village: string, subDist: string }> = {
-  'gp@mygaav.com': { name: 'GP Officer', dept: ServiceType.GRAMPANCHAYAT, pass: 'admin123', icon: Building, color: 'bg-emerald-600', village: 'Sukhawadi', subDist: 'Haveli' },
-  'elec@mygaav.com': { name: 'MSEB Officer', dept: ServiceType.ELECTRICITY, pass: 'admin123', icon: Zap, color: 'bg-blue-600', village: 'Sukhawadi', subDist: 'Haveli' },
-  'gas@mygaav.com': { name: 'Gas Agency', dept: ServiceType.GAS, pass: 'admin123', icon: Flame, color: 'bg-orange-600', village: 'Sukhawadi', subDist: 'Haveli' },
-  'chavdi@mygaav.com': { name: 'Revenue Officer', dept: ServiceType.CHAVDI, pass: 'admin123', icon: FileText, color: 'bg-amber-600', village: 'Sukhawadi', subDist: 'Haveli' },
-  'health@mygaav.com': { name: 'Health Officer', dept: ServiceType.HEALTH, pass: 'admin123', icon: HeartPulse, color: 'bg-rose-600', village: 'Sukhawadi', subDist: 'Haveli' },
-  'mandi@mygaav.com': { name: 'Mandi Supervisor', dept: ServiceType.MARKET, pass: 'admin123', icon: ShoppingBasket, color: 'bg-indigo-600', village: 'Sukhawadi', subDist: 'Haveli' }
-};
-
 const DEMO_RESIDENT = {
   email: 'resident@mygaav.com',
   name: 'Rahul Deshmukh',
@@ -66,66 +49,45 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   const [error, setError] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
+  const [serverOfficerKeys, setServerOfficerKeys] = useState<string[]>([]);
 
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
 
   const validateOfficerKey = (key: string) => {
     const upperKey = key.toUpperCase().trim();
-    
-    // 1. Check Permanent Keys first (Always work)
-    if (PERMANENT_OFFICER_KEYS.includes(upperKey)) return true;
-
-    // 2. Check Generated Keys in LocalStorage
-    const stored = localStorage.getItem(OFFICER_KEYS_KEY);
-    if (!stored) return false;
-    try {
-      const keys = JSON.parse(stored) as string[];
-      // Use a Set for faster lookup if the list is large
-      return new Set(keys).has(upperKey);
-    } catch (e) {
-      return false;
-    }
+    return serverOfficerKeys.includes(upperKey);
   };
 
   useEffect(() => {
     // Wipe old localStorage data on first load of this update
-    const dataCleared = localStorage.getItem('MYGAAV_DATA_WIPED_V3');
+    const dataCleared = localStorage.getItem('MYGAAV_DATA_WIPED_V4');
     if (!dataCleared) {
       localStorage.removeItem(USER_REGISTRY_KEY);
-      localStorage.setItem('MYGAAV_DATA_WIPED_V3', 'true');
+      localStorage.removeItem(OFFICER_KEYS_KEY);
+      localStorage.setItem('MYGAAV_DATA_WIPED_V4', 'true');
     }
 
-    // Silent key generation if missing (moved to timeout to prevent UI freeze)
-    const existingKeys = localStorage.getItem(OFFICER_KEYS_KEY);
-    if (!existingKeys) {
-      setTimeout(() => {
-        const keys = new Set<string>();
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        while (keys.size < 100000) {
-          let key = '';
-          for (let i = 0; i < 8; i++) {
-            key += chars.charAt(Math.floor(Math.random() * chars.length));
-          }
-          keys.add(key);
-        }
-        localStorage.setItem(OFFICER_KEYS_KEY, JSON.stringify(Array.from(keys)));
-        console.log("1 Lakh Officer keys generated and saved to LocalStorage.");
-      }, 1000);
-    }
-
-    // Fetch accounts from backend
-    const fetchAccounts = async () => {
+    // Fetch accounts and keys from backend
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/accounts');
-        if (response.ok) {
-          const data = await response.json();
+        const [accResp, keyResp] = await Promise.all([
+          fetch('/api/accounts'),
+          fetch('/api/officer-keys')
+        ]);
+        
+        if (accResp.ok) {
+          const data = await accResp.json();
           setSavedAccounts(data);
         }
+        if (keyResp.ok) {
+          const keys = await keyResp.json();
+          setServerOfficerKeys(keys);
+        }
       } catch (e) {
-        console.error("Failed to fetch accounts", e);
+        console.error("Failed to fetch data", e);
       }
     };
-    fetchAccounts();
+    fetchData();
   }, []);
 
   const saveToRegistry = async (profile: UserProfile, password?: string) => {
@@ -157,7 +119,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
   };
 
-  const handleQuickLogin = (type: 'resident' | 'officer', key?: string) => {
+  const handleQuickLogin = (type: 'resident' | 'officer') => {
     if (type === 'resident') {
       const profile: UserProfile = {
         id: 'DEMO-RES-1',
@@ -172,23 +134,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         status: 'approved'
       };
       saveToRegistry(profile, DEMO_RESIDENT.pass);
-      onLogin(profile);
-    } else if (key && SYSTEM_ADMINS[key]) {
-      const sys = SYSTEM_ADMINS[key];
-      const profile: UserProfile = {
-        id: `SYS-${sys.dept.toUpperCase()}`,
-        name: sys.name,
-        email: key,
-        state: 'Maharashtra',
-        district: 'Pune',
-        subDistrict: sys.subDist,
-        village: sys.village,
-        role: 'admin',
-        department: sys.dept,
-        joinedAt: 'System Config',
-        status: 'approved'
-      };
-      saveToRegistry(profile, sys.pass);
       onLogin(profile);
     }
   };
@@ -237,13 +182,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         }
         onLogin(match);
         return;
-      }
-      if (role === 'admin' && SYSTEM_ADMINS[emailKey]) {
-        const sys = SYSTEM_ADMINS[emailKey];
-        if (formData.password === sys.pass && formData.department === sys.dept) {
-          handleQuickLogin('officer', emailKey);
-          return;
-        }
       }
       if (role === 'user' && emailKey === DEMO_RESIDENT.email && formData.password === DEMO_RESIDENT.pass) {
         handleQuickLogin('resident');

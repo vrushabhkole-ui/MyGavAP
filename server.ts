@@ -16,6 +16,7 @@ const TXNS_FILE = path.join(DATA_DIR, "transactions.json");
 const NOTICES_FILE = path.join(DATA_DIR, "notices.json");
 const NOTIFS_FILE = path.join(DATA_DIR, "notifications.json");
 const BIZ_FILE = path.join(DATA_DIR, "businesses.json");
+const KEYS_FILE = path.join(DATA_DIR, "officer_keys.json");
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -28,7 +29,16 @@ const initFile = (file: string, defaultData: any = []) => {
   }
 };
 
-initFile(REGISTRY_FILE);
+const SYSTEM_ACCOUNTS = [
+  { id: 'SYS-GRAMPANCHAYAT', name: 'GP Officer', email: 'gp@mygaav.com', password: 'admin123', role: 'admin', department: 'grampanchayat', village: 'Sukhawadi', subDistrict: 'Haveli', district: 'Pune', state: 'Maharashtra', status: 'approved', joinedAt: 'System Config' },
+  { id: 'SYS-ELECTRICITY', name: 'MSEB Officer', email: 'elec@mygaav.com', password: 'admin123', role: 'admin', department: 'electricity', village: 'Sukhawadi', subDistrict: 'Haveli', district: 'Pune', state: 'Maharashtra', status: 'approved', joinedAt: 'System Config' },
+  { id: 'SYS-GAS', name: 'Gas Agency', email: 'gas@mygaav.com', password: 'admin123', role: 'admin', department: 'gas', village: 'Sukhawadi', subDistrict: 'Haveli', district: 'Pune', state: 'Maharashtra', status: 'approved', joinedAt: 'System Config' },
+  { id: 'SYS-CHAVDI', name: 'Revenue Officer', email: 'chavdi@mygaav.com', password: 'admin123', role: 'admin', department: 'chavdi', village: 'Sukhawadi', subDistrict: 'Haveli', district: 'Pune', state: 'Maharashtra', status: 'approved', joinedAt: 'System Config' },
+  { id: 'SYS-HEALTH', name: 'Health Officer', email: 'health@mygaav.com', password: 'admin123', role: 'admin', department: 'health', village: 'Sukhawadi', subDistrict: 'Haveli', district: 'Pune', state: 'Maharashtra', status: 'approved', joinedAt: 'System Config' },
+  { id: 'SYS-MARKET', name: 'Mandi Supervisor', email: 'mandi@mygaav.com', password: 'admin123', role: 'admin', department: 'market', village: 'Sukhawadi', subDistrict: 'Haveli', district: 'Pune', state: 'Maharashtra', status: 'approved', joinedAt: 'System Config' }
+];
+
+initFile(REGISTRY_FILE, SYSTEM_ACCOUNTS);
 initFile(REQUESTS_FILE);
 initFile(BILLS_FILE, [
   { id: 'BL-9921', userId: 'DEMO-RES-1', village: 'Sukhawadi', subDistrict: 'Haveli', type: 'Home Tax', amount: 1250, dueDate: '25 Dec 2023', issuedAt: '01 Dec 2023', status: 'Unpaid', description: 'Property tax for Financial Year 2023-24' },
@@ -44,6 +54,28 @@ initFile(BIZ_FILE, [
   { id: 'BZ-1', name: 'Shree Grocery Store', category: 'Grocery', contact: '9876543210', hours: '8 AM - 9 PM', description: 'Fresh farm produce and daily essentials.', ownerName: 'Rahul Deshmukh', village: 'Sukhawadi', subDistrict: 'Haveli', status: 'Approved' },
   { id: 'BZ-2', name: 'Mauli Hair Salon', category: 'Salon', contact: '9876543211', hours: '9 AM - 8 PM', description: 'Modern hair styling and grooming services.', ownerName: 'Sanjay Pawar', village: 'Sukhawadi', subDistrict: 'Haveli', status: 'Approved' }
 ]);
+
+// Initialize Officer Keys if not present
+if (!fs.existsSync(KEYS_FILE)) {
+  const keys = new Set<string>();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const permanentKeys = [
+    'OFFICER01', 'OFFICER02', 'OFFICER03', 'OFFICER04', 'OFFICER05',
+    'MAHA7788', 'PUNE9900', 'GAAV1122', 'FIELD556', 'ADMIN889',
+    'KEY2024X', 'KEY2025Y', 'VILLAGE1', 'GAAVHUB9',
+    'K8J2M4P9', 'L7N3Q5R1', 'B6V9X2Z4', 'H1G5F8D3', 'S0A2W4E6'
+  ];
+  permanentKeys.forEach(k => keys.add(k));
+  
+  while (keys.size < 1000) { // Reduced for performance, can be larger
+    let key = '';
+    for (let i = 0; i < 8; i++) {
+      key += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    keys.add(key);
+  }
+  fs.writeFileSync(KEYS_FILE, JSON.stringify(Array.from(keys), null, 2));
+}
 
 async function startServer() {
   const app = express();
@@ -80,6 +112,10 @@ async function startServer() {
       saveData(route.file, req.body);
       res.json({ success: true });
     });
+  });
+
+  app.get("/api/officer-keys", (req, res) => {
+    res.json(readData(KEYS_FILE));
   });
 
   // Specific Auth Routes
