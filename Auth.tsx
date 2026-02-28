@@ -128,6 +128,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   useEffect(() => {
+    // Wipe old localStorage data on first load of this update
+    const dataCleared = localStorage.getItem('MYGAAV_DATA_WIPED_V3');
+    if (!dataCleared) {
+      localStorage.removeItem(USER_REGISTRY_KEY);
+      localStorage.setItem('MYGAAV_DATA_WIPED_V3', 'true');
+    }
+
     // Silent key generation if missing (moved to timeout to prevent UI freeze)
     const existingKeys = localStorage.getItem(OFFICER_KEYS_KEY);
     if (!existingKeys) {
@@ -146,27 +153,48 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       }, 1000);
     }
 
-    const stored = localStorage.getItem(USER_REGISTRY_KEY);
-    if (stored) {
-      try { 
-        setSavedAccounts(JSON.parse(stored)); 
-      } catch (e) { 
-        console.error("Registry parse error", e); 
+    // Fetch accounts from backend
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch('/api/auth/accounts');
+        if (response.ok) {
+          const data = await response.json();
+          setSavedAccounts(data);
+        }
+      } catch (e) {
+        console.error("Failed to fetch accounts", e);
       }
-    }
+    };
+    fetchAccounts();
   }, []);
 
-  const saveToRegistry = (profile: UserProfile, password?: string) => {
+  const saveToRegistry = async (profile: UserProfile, password?: string) => {
     const stored: StoredAccount = { 
       ...profile, 
       password: password || '', 
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)] 
     };
     
-    const existing = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
-    const newList = [...existing.filter((a: any) => a.email.toLowerCase() !== profile.email.toLowerCase()), stored];
-    localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(newList));
-    setSavedAccounts(newList);
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stored)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
+        return true;
+      } else {
+        const err = await response.json();
+        setError(err.error || 'Registration failed');
+        return false;
+      }
+    } catch (e) {
+      setError('Server connection failed');
+      return false;
+    }
   };
 
   const handleQuickLogin = (type: 'resident' | 'officer', key?: string) => {
@@ -205,12 +233,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
   };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     const emailKey = formData.email.trim().toLowerCase();
 
-    const match = savedAccounts.find(a => 
+    // Re-fetch accounts to ensure we have the latest
+    let currentAccounts = savedAccounts;
+    try {
+      const resp = await fetch('/api/auth/accounts');
+      if (resp.ok) {
+        currentAccounts = await resp.json();
+        setSavedAccounts(currentAccounts);
+      }
+    } catch (e) {}
+
+    const match = currentAccounts.find(a => 
       a.email.toLowerCase() === emailKey && 
       a.role === role && 
       (role === 'user' || a.department === formData.department)
@@ -255,13 +293,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       return;
     }
 
-    // Check if email or mobile already exists in the registry
-    const existingRegistry = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
-    if (existingRegistry.some((a: any) => a.email.toLowerCase() === emailKey)) {
+    // Check if email or mobile already exists
+    if (currentAccounts.some((a: any) => a.email.toLowerCase() === emailKey)) {
       setError('This email is already registered. Please login instead.');
       return;
     }
-    if (existingRegistry.some((a: any) => a.mobile === formData.mobile)) {
+    if (currentAccounts.some((a: any) => a.mobile === formData.mobile)) {
       setError('This mobile number is already registered. Please use a different one.');
       return;
     }
@@ -283,12 +320,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       status: role === 'admin' ? 'approved' : 'pending'
     };
     
-    saveToRegistry(profile, formData.password);
-    if (role === 'admin') {
-      onLogin(profile);
-    } else {
-      setError('Registration successful! Your account is now pending approval from Grampanchayat.');
-      setIsLogin(true);
+    const success = await saveToRegistry(profile, formData.password);
+    if (success) {
+      if (role === 'admin') {
+        onLogin(profile);
+      } else {
+        setError('Registration successful! Your account is now pending approval from Grampanchayat.');
+        setIsLogin(true);
+      }
     }
   };
 
