@@ -102,13 +102,9 @@ const App: React.FC = () => {
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         setResidents(allUsers.filter(u => u.role === 'user'));
-      } else {
-        throw new Error('Server error');
       }
     } catch (e) {
-      console.warn("Failed to load residents from server, falling back to local storage");
-      const localUsers = JSON.parse(localStorage.getItem('MYGAAV_USER_REGISTRY') || '[]') as UserProfile[];
-      setResidents(localUsers.filter(u => u.role === 'user'));
+      console.error("Failed to load residents from server", e);
     }
   };
 
@@ -142,13 +138,9 @@ const App: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) setter(data);
-        } else {
-          throw new Error('Server error');
         }
       } catch (e) {
-        console.warn(`Failed to load ${path} from server, falling back to local storage`);
-        const localData = JSON.parse(localStorage.getItem(`MYGAAV_DATA_${path.toUpperCase()}`) || '[]');
-        if (localData && localData.length > 0) setter(localData);
+        console.error(`Failed to load ${path} from server`, e);
       }
     };
 
@@ -287,17 +279,9 @@ const App: React.FC = () => {
           return found ? { ...u, ...found } : u;
         });
         await syncToServer('accounts', newAllUsers);
-      } else {
-        throw new Error('Server error');
       }
     } catch (e) {
-      console.warn("Failed to update residents on server, falling back to local storage");
-      const localUsers = JSON.parse(localStorage.getItem('MYGAAV_USER_REGISTRY') || '[]') as UserProfile[];
-      const newAllUsers = localUsers.map(u => {
-        const found = updatedResidents.find(r => r.id === u.id);
-        return found ? { ...u, ...found } : u;
-      });
-      localStorage.setItem('MYGAAV_USER_REGISTRY', JSON.stringify(newAllUsers));
+      console.error("Failed to update residents on server", e);
     }
   };
 

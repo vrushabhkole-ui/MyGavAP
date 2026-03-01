@@ -176,7 +176,7 @@ async function startServer() {
     accounts.push(newAccount);
     saveData(REGISTRY_FILE, accounts);
     io.emit('data-update-accounts', accounts);
-    res.json({ success: true, account: newAccount });
+    res.json({ success: true, account: newAccount, accounts });
   });
 
   // Clear all data

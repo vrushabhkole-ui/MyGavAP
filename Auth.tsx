@@ -256,34 +256,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       
       if (response.ok) {
         const data = await response.json();
-        setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
+        // Server returns the updated list of accounts
+        if (data.accounts) {
+          setSavedAccounts(data.accounts);
+        } else {
+          setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
+        }
         return true;
       } else {
-        if (response.status === 400) {
-          const err = await response.json().catch(() => ({ error: 'Registration failed' }));
-          setError(err.error || 'Registration failed');
-          return false;
-        }
-        throw new Error(`Server error: ${response.status}`);
-      }
-    } catch (e) {
-      console.warn('Server connection failed, falling back to local storage', e);
-      
-      const existing = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
-      const exists = existing.find((a: any) => 
-        a.email.toLowerCase() === profile.email.toLowerCase() || 
-        (profile.mobile && a.mobile === profile.mobile)
-      );
-
-      if (exists) {
-        setError("Account already exists.");
+        const err = await response.json().catch(() => ({ error: 'Registration failed' }));
+        setError(err.error || 'Registration failed');
         return false;
       }
-
-      existing.push(stored);
-      localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(existing));
-      setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
-      return true;
+    } catch (e) {
+      console.error('Server connection failed', e);
+      setError('Connection error. Please check your internet.');
+      return false;
     }
   };
 
@@ -349,32 +337,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           setError(data.error || 'Invalid credentials.');
         }
       } catch (e) {
-        // Fallback to local storage if offline
-        const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
-        const match = localAccounts.find((a: any) => 
-          a.email.toLowerCase() === emailKey && 
-          a.password === formData.password &&
-          a.role === role && 
-          (role === 'user' || a.department === formData.department)
-        );
-
-        if (match) {
-          if (match.role === 'user' && match.status === 'pending') {
-            setError('Your account is pending approval from Grampanchayat. Please try again later.');
-            return;
-          }
-          if (match.role === 'admin' && match.status === 'pending') {
-            setError('Your account is pending approval from Developer. Please try again later.');
-            return;
-          }
-          if (match.role === 'user' && match.status === 'rejected') {
-            setError('Your registration has been rejected. Please contact Grampanchayat.');
-            return;
-          }
-          onLogin(match);
-        } else {
-          setError('Invalid credentials or offline.');
-        }
+        console.error('Login error', e);
+        setError('Connection error. Please check your internet.');
       }
       return;
     }
@@ -387,11 +351,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       if (resp.ok) {
         currentAccounts = await resp.json();
         setSavedAccounts(currentAccounts);
-      } else {
-        currentAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
       }
     } catch (e) {
-      currentAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+      console.error('Failed to fetch accounts during registration', e);
     }
 
     // Check if email or mobile already exists
@@ -533,6 +495,30 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
+            {isLogin && savedAccounts.length > 0 && (
+              <div className="pb-4 border-b border-slate-50">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2 block">Registered Accounts ({savedAccounts.length})</label>
+                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                  {savedAccounts.slice(0, 5).map(acc => (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, email: acc.email });
+                        setRole(acc.role as UserRole);
+                        if (acc.department) setFormData(prev => ({ ...prev, department: acc.department as ServiceType }));
+                      }}
+                      className="flex flex-col items-center gap-1 shrink-0 group"
+                    >
+                      <div className={`w-10 h-10 rounded-full ${acc.avatarColor || 'bg-slate-200'} flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform`}>
+                        {acc.name.charAt(0)}
+                      </div>
+                      <span className="text-[8px] font-bold text-slate-500 max-w-[50px] truncate">{acc.name.split(' ')[0]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {role === 'admin' && (
               <div className="space-y-2">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('selectDepartment')}</label>
@@ -679,7 +665,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                           <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
                             {savedAccounts.filter(a => 
                               a.role === 'admin' && 
-                              a.status === 'approved' &&
                               (adminSearchQuery.length > 0
                                 ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
                                    a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
@@ -689,7 +674,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             ).length > 0 ? (
                               savedAccounts.filter(a => 
                                 a.role === 'admin' && 
-                                a.status === 'approved' &&
                                 (adminSearchQuery.length > 0
                                   ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
                                      a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
@@ -707,7 +691,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                                   }}
                                   className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
                                 >
-                                  <p className="text-sm font-bold text-slate-800">{admin.name}</p>
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-slate-800">{admin.name}</p>
+                                    {admin.status === 'pending' && (
+                                      <span className="text-[8px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">Pending</span>
+                                    )}
+                                  </div>
                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
                                     {admin.department ? DICTIONARY[admin.department]?.en || admin.department : 'Admin'} • {admin.village}
                                   </p>

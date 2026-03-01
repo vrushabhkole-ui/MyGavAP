@@ -16,26 +16,11 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      // Fetch from server
       const res = await fetch('/api/accounts');
-      let serverData: StoredAccount[] = [];
       if (res.ok) {
-        serverData = await res.json();
+        const serverData = await res.json();
+        setAccounts(serverData);
       }
-
-      // Fetch from local storage (fallback for offline registrations)
-      const localData = JSON.parse(localStorage.getItem('MYGAAV_USER_REGISTRY') || '[]') as StoredAccount[];
-      
-      // Merge data, preferring server data but including local-only data
-      const mergedMap = new Map<string, StoredAccount>();
-      
-      // Add local data first
-      localData.forEach(acc => mergedMap.set(acc.id, acc));
-      
-      // Overwrite with server data (source of truth)
-      serverData.forEach(acc => mergedMap.set(acc.id, acc));
-      
-      setAccounts(Array.from(mergedMap.values()));
     } catch (e) {
       console.error("Failed to fetch accounts", e);
     } finally {
