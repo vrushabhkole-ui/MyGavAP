@@ -253,7 +253,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         if (data.accounts) {
           setSavedAccounts(data.accounts);
         } else {
-          setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
+          setSavedAccounts(prev => [...prev.filter(a => a.email && profile.email && a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
         }
         return stored;
       } else {
@@ -272,7 +272,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
-    const emailKey = formData.email.trim().toLowerCase();
+    const emailKey = (formData.email || '').trim().toLowerCase();
 
     if (!isLogin && role === 'admin') {
       if (!formData.officerKey) {
@@ -326,11 +326,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
 
     // Check if email or mobile already exists
-    if (currentAccounts.some((a: any) => a.email.toLowerCase() === emailKey)) {
+    if (currentAccounts.some((a: any) => a.email && a.email.toLowerCase() === emailKey)) {
       setError('This email is already registered. Please login instead.');
       return;
     }
-    if (currentAccounts.some((a: any) => a.mobile === formData.mobile)) {
+    if (formData.mobile && currentAccounts.some((a: any) => a.mobile && a.mobile === formData.mobile)) {
       setError('This mobile number is already registered. Please use a different one.');
       return;
     }
@@ -634,19 +634,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             {savedAccounts.filter(a => 
                               a.role === 'admin' && 
                               (adminSearchQuery.length > 0
-                                ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
-                                   a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                                   a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                                   a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                                ? ((a.name && a.name.toLowerCase().includes(adminSearchQuery.toLowerCase())) || 
+                                   (a.village && a.village.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
+                                   (a.subDistrict && a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
+                                   (a.district && a.district.toLowerCase().includes(adminSearchQuery.toLowerCase())))
                                 : true)
                             ).length > 0 ? (
                               savedAccounts.filter(a => 
                                 a.role === 'admin' && 
                                 (adminSearchQuery.length > 0
-                                  ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
-                                     a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                                     a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                                     a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                                  ? ((a.name && a.name.toLowerCase().includes(adminSearchQuery.toLowerCase())) || 
+                                     (a.village && a.village.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
+                                     (a.subDistrict && a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
+                                     (a.district && a.district.toLowerCase().includes(adminSearchQuery.toLowerCase())))
                                   : true)
                               ).map(admin => (
                                 <button

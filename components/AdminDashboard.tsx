@@ -324,7 +324,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       (managedTaluka === 'All' || r.subDistrict === managedTaluka) &&
       (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode)
     ) &&
-    (searchTerm === '' || r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
+    (searchTerm === '' || (r.name && r.name.toLowerCase().includes(searchTerm.toLowerCase())) || (r.id && r.id.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   const villageBusinesses = businesses.filter(b => 
@@ -349,7 +349,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )
     ) &&
     (requestStatusFilter === 'All' || r.status === requestStatusFilter) &&
-    (searchTerm === '' || r.userName.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
+    (searchTerm === '' || (r.userName && r.userName.toLowerCase().includes(searchTerm.toLowerCase())) || (r.id && r.id.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   const filteredTransactions = transactions.filter(t => 
@@ -361,7 +361,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode) &&
       isBillTypeForDept(t.type, dept)
     ) &&
-    (searchTerm === '' || t.userName.toLowerCase().includes(searchTerm.toLowerCase()))
+    (searchTerm === '' || (t.userName && t.userName.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   // Filtered bills with status and search
@@ -375,7 +375,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       isBillTypeForDept(b.type, dept)
     ) &&
     (billStatusFilter === 'All' || b.status === billStatusFilter) &&
-    (searchTerm === '' || b.userId.toLowerCase().includes(searchTerm.toLowerCase()))
+    (searchTerm === '' || (b.userId && b.userId.toLowerCase().includes(searchTerm.toLowerCase())))
   );
   
   const filteredNotices = notices.filter(n => 

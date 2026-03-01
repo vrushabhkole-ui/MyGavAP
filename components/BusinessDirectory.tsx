@@ -36,8 +36,8 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
   const approvedBusinesses = businesses.filter(b => b.status === 'Approved');
 
   const filtered = approvedBusinesses.filter(b => 
-    b.name.toLowerCase().includes(search.toLowerCase()) || 
-    b.category.toLowerCase().includes(search.toLowerCase())
+    (b.name && b.name.toLowerCase().includes(search.toLowerCase())) || 
+    (b.category && b.category.toLowerCase().includes(search.toLowerCase()))
   );
 
   const categories = Array.from(new Set(approvedBusinesses.map(b => b.category)));

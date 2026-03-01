@@ -123,7 +123,7 @@ async function startServer() {
     const accounts = readData(REGISTRY_FILE);
     
     const user = accounts.find((a: any) => 
-      a.email.toLowerCase() === email.toLowerCase() && 
+      a.email && email && a.email.toLowerCase() === email.toLowerCase() && 
       a.password === password &&
       a.role === role
     );
@@ -149,8 +149,8 @@ async function startServer() {
     const accounts = readData(REGISTRY_FILE);
     
     const exists = accounts.find((a: any) => 
-      a.email.toLowerCase() === newAccount.email.toLowerCase() || 
-      (newAccount.mobile && a.mobile === newAccount.mobile)
+      (a.email && newAccount.email && a.email.toLowerCase() === newAccount.email.toLowerCase()) || 
+      (newAccount.mobile && a.mobile && a.mobile === newAccount.mobile)
     );
 
     if (exists) {
