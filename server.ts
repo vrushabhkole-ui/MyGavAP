@@ -265,11 +265,30 @@ async function startServer() {
       console.error("Failed to load Vite:", e);
     }
   } else {
-    app.use(express.static(path.join(__dirname, "dist")));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"));
-    });
+    const distPath = path.join(__dirname, "dist");
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get("*", (_req, res) => {
+        const indexPath = path.join(distPath, "index.html");
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send("Application not built (index.html missing)");
+        }
+      });
+    } else {
+      console.error("Dist folder not found at:", distPath);
+      app.get("*", (_req, res) => {
+        res.status(500).send("Server Error: Dist folder missing. Please run build.");
+      });
+    }
   }
+
+  // Catch-all for API 404s
+  app.use("/api/*", (req, res) => {
+    console.log(`404 API Request: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ error: "API endpoint not found" });
+  });
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
