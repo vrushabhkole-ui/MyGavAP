@@ -317,13 +317,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Citizens list filtered by search
   const villageCitizens = residents.filter(r => 
-    (r.assignedAdminId === user.id || (!r.assignedAdminId && 
+    (
       (managedState === 'All' || r.state === managedState) &&
       (managedDistrict === 'All' || r.district === managedDistrict) &&
       (managedVillage === 'All' || r.village === managedVillage) && 
       (managedTaluka === 'All' || r.subDistrict === managedTaluka) &&
       (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode)
-    )) &&
+    ) &&
     (searchTerm === '' || r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -337,29 +337,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Filtered requests with status and search
   const filteredRequests = requests.filter(r => 
-    (r.assignedAdminId === user.id || (!r.assignedAdminId && 
+    (
       (managedState === 'All' || r.state === managedState) && 
       (managedDistrict === 'All' || r.district === managedDistrict) && 
       (managedVillage === 'All' || r.village === managedVillage) && 
       (managedTaluka === 'All' || r.subDistrict === managedTaluka) && 
       (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode) &&
       (!dept || r.serviceId === dept)
-    )) &&
+    ) &&
     (requestStatusFilter === 'All' || r.status === requestStatusFilter) &&
     (searchTerm === '' || r.userName.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredTransactions = transactions.filter(t => 
     (
-      (residents.find(r => r.id === t.userId)?.assignedAdminId === user.id) || 
-      (!residents.find(r => r.id === t.userId)?.assignedAdminId && 
-        (managedState === 'All' || t.state === managedState) && 
-        (managedDistrict === 'All' || t.district === managedDistrict) && 
-        (managedVillage === 'All' || t.village === managedVillage) && 
-        (managedTaluka === 'All' || t.subDistrict === managedTaluka) && 
-        (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode) &&
-        isBillTypeForDept(t.type, dept)
-      )
+      (managedState === 'All' || t.state === managedState) && 
+      (managedDistrict === 'All' || t.district === managedDistrict) && 
+      (managedVillage === 'All' || t.village === managedVillage) && 
+      (managedTaluka === 'All' || t.subDistrict === managedTaluka) && 
+      (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode) &&
+      isBillTypeForDept(t.type, dept)
     ) &&
     (searchTerm === '' || t.userName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -367,15 +364,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Filtered bills with status and search
   const filteredBills = bills.filter(b => 
     (
-      (residents.find(r => r.id === b.userId)?.assignedAdminId === user.id) || 
-      (!residents.find(r => r.id === b.userId)?.assignedAdminId && 
-        (managedState === 'All' || b.state === managedState) && 
-        (managedDistrict === 'All' || b.district === managedDistrict) && 
-        (managedVillage === 'All' || b.village === managedVillage) && 
-        (managedTaluka === 'All' || b.subDistrict === managedTaluka) && 
-        (managedPincode === 'All' || managedPincode === '000000' || b.pincode === managedPincode) &&
-        isBillTypeForDept(b.type, dept)
-      )
+      (managedState === 'All' || b.state === managedState) && 
+      (managedDistrict === 'All' || b.district === managedDistrict) && 
+      (managedVillage === 'All' || b.village === managedVillage) && 
+      (managedTaluka === 'All' || b.subDistrict === managedTaluka) && 
+      (managedPincode === 'All' || managedPincode === '000000' || b.pincode === managedPincode) &&
+      isBillTypeForDept(b.type, dept)
     ) &&
     (billStatusFilter === 'All' || b.status === billStatusFilter) &&
     (searchTerm === '' || b.userId.toLowerCase().includes(searchTerm.toLowerCase()))

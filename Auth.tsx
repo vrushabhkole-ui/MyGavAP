@@ -643,7 +643,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
                   {!isLogin && role === 'user' && (
                     <div className="space-y-4 pt-4 border-t border-slate-100">
-                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Select Grampanchayat Admin</h3>
+                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Select Admin</h3>
                       <div className="relative">
                         <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
                           <Search size={18} className="text-slate-400" />
@@ -675,29 +675,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             </button>
                           )}
                         </div>
-                        {showAdminDropdown && (adminSearchQuery.length > 0 || formData.village) && (
+                        {showAdminDropdown && (
                           <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
                             {savedAccounts.filter(a => 
                               a.role === 'admin' && 
-                              a.department === ServiceType.GRAMPANCHAYAT &&
                               a.status === 'approved' &&
                               (adminSearchQuery.length > 0
                                 ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
                                    a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                                    a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                                    a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
-                                : (a.village.toLowerCase() === formData.village.toLowerCase()))
+                                : true)
                             ).length > 0 ? (
                               savedAccounts.filter(a => 
                                 a.role === 'admin' && 
-                                a.department === ServiceType.GRAMPANCHAYAT &&
                                 a.status === 'approved' &&
                                 (adminSearchQuery.length > 0
                                   ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
                                      a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                                      a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                                      a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
-                                  : (a.village.toLowerCase() === formData.village.toLowerCase()))
+                                  : true)
                               ).map(admin => (
                                 <button
                                   key={admin.id}
@@ -711,7 +709,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                                 >
                                   <p className="text-sm font-bold text-slate-800">{admin.name}</p>
                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
-                                    Village: {admin.village} • Taluka: {admin.subDistrict} • District: {admin.district} • State: {admin.state}
+                                    {admin.department ? DICTIONARY[admin.department]?.en || admin.department : 'Admin'} • {admin.village}
                                   </p>
                                 </button>
                               ))
