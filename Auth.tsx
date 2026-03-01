@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search, X, Loader2 } from 'lucide-react';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
@@ -194,6 +195,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       localStorage.setItem('MYGAAV_DATA_WIPED_V4', 'true');
     }
 
+    const socket = io();
+    socket.on('data-update-accounts', (data) => {
+      setSavedAccounts(data);
+    });
+
     // Fetch accounts and keys from backend
     const fetchData = async () => {
       try {
@@ -228,6 +234,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       }
     };
     fetchData();
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const saveToRegistry = async (profile: UserProfile, password?: string) => {
@@ -591,23 +601,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             </button>
                           )}
                         </div>
-                        {showAdminDropdown && adminSearchQuery.length > 0 && (
+                        {showAdminDropdown && (adminSearchQuery.length > 0 || formData.village) && (
                           <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
                             {savedAccounts.filter(a => 
                               a.role === 'admin' && 
                               a.department === ServiceType.GRAMPANCHAYAT &&
-                              (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
-                               a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                               a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                               a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                              (adminSearchQuery.length > 0
+                                ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                                   a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                                   a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                                   a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                                : (a.village.toLowerCase() === formData.village.toLowerCase()))
                             ).length > 0 ? (
                               savedAccounts.filter(a => 
                                 a.role === 'admin' && 
                                 a.department === ServiceType.GRAMPANCHAYAT &&
-                                (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
-                                 a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                                 a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                                 a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                                (adminSearchQuery.length > 0
+                                  ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                                     a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                                     a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                                     a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                                  : (a.village.toLowerCase() === formData.village.toLowerCase()))
                               ).map(admin => (
                                 <button
                                   key={admin.id}
