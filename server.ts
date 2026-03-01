@@ -252,6 +252,12 @@ async function startServer() {
     res.status(500).json({ error: "Internal Server Error", details: err.message });
   });
 
+  // Catch-all for API 404s (Must be before frontend middleware)
+  app.use("/api/*", (req, res) => {
+    console.log(`404 API Request: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ error: "API endpoint not found" });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     try {
@@ -283,12 +289,6 @@ async function startServer() {
       });
     }
   }
-
-  // Catch-all for API 404s
-  app.use("/api/*", (req, res) => {
-    console.log(`404 API Request: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ error: "API endpoint not found" });
-  });
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
