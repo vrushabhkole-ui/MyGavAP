@@ -167,13 +167,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     gasId: '',
     chavdiNo: '',
     healthId: '',
-    officerKey: ''
+    officerKey: '',
+    assignedAdminId: ''
   });
 
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<StoredAccount[]>([]);
   const [serverOfficerKeys, setServerOfficerKeys] = useState<string[]>([]);
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
 
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
 
@@ -401,7 +404,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       role,
       department: role === 'admin' ? formData.department : undefined,
       joinedAt: new Date().toLocaleDateString('en-IN'),
-      status: role === 'admin' ? 'approved' : 'pending'
+      status: role === 'admin' ? 'approved' : 'pending',
+      assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined
     };
     
     const success = await saveToRegistry(profile, formData.password);
@@ -529,10 +533,115 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                       <input required readOnly placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village || ''} />
                     </div>
                   </div>
+                  
+                  {!isLogin && role === 'admin' && (
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <input 
+                        type="checkbox" 
+                        id="manageAll" 
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={formData.village === 'All'}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({...formData, village: 'All'});
+                          } else {
+                            setFormData({...formData, village: ''});
+                          }
+                        }}
+                      />
+                      <label htmlFor="manageAll" className="text-[10px] font-black text-slate-600 uppercase tracking-widest cursor-pointer">Manage all villages in Taluka</label>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                     <Hash size={18} className="text-slate-400" />
                     <input required readOnly placeholder={t('pincode')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.pincode || ''} />
                   </div>
+
+                  {!isLogin && role === 'user' && (
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Select Grampanchayat Admin</h3>
+                      <div className="relative">
+                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                          <Search size={18} className="text-slate-400" />
+                          <input 
+                            type="text"
+                            placeholder="Search admin by name or village..."
+                            className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
+                            value={adminSearchQuery}
+                            onChange={(e) => {
+                              setAdminSearchQuery(e.target.value);
+                              setShowAdminDropdown(true);
+                              if (formData.assignedAdminId) {
+                                setFormData({...formData, assignedAdminId: ''});
+                              }
+                            }}
+                            onFocus={() => setShowAdminDropdown(true)}
+                          />
+                          {adminSearchQuery.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAdminSearchQuery('');
+                                setFormData({...formData, assignedAdminId: ''});
+                                setShowAdminDropdown(false);
+                              }}
+                              className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+                            >
+                              <X size={16} className="text-slate-400" />
+                            </button>
+                          )}
+                        </div>
+                        {showAdminDropdown && adminSearchQuery.length > 0 && (
+                          <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+                            {savedAccounts.filter(a => 
+                              a.role === 'admin' && 
+                              a.department === ServiceType.GRAMPANCHAYAT &&
+                              (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                               a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                               a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                               a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                            ).length > 0 ? (
+                              savedAccounts.filter(a => 
+                                a.role === 'admin' && 
+                                a.department === ServiceType.GRAMPANCHAYAT &&
+                                (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                                 a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                                 a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+                                 a.district.toLowerCase().includes(adminSearchQuery.toLowerCase()))
+                              ).map(admin => (
+                                <button
+                                  key={admin.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({...formData, assignedAdminId: admin.id});
+                                    setAdminSearchQuery(admin.name);
+                                    setShowAdminDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                                >
+                                  <p className="text-sm font-bold text-slate-800">{admin.name}</p>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                                    Village: {admin.village} • Taluka: {admin.subDistrict} • District: {admin.district} • State: {admin.state}
+                                  </p>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-3 text-sm text-slate-500 text-center">No admins found</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {formData.assignedAdminId && (
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-start gap-3">
+                          <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-emerald-800">Admin Selected</p>
+                            <p className="text-[10px] text-emerald-600 mt-0.5">Your requests will be sent to this admin permanently.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                 <div className="grid grid-cols-1 gap-3 pt-4">
                   <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">

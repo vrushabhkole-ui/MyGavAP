@@ -212,7 +212,8 @@ const App: React.FC = () => {
       status: 'Pending',
       createdAt: new Date().toLocaleDateString('en-IN'),
       source: 'user',
-      userDocument: userDoc
+      userDocument: userDoc,
+      assignedAdminId: user.assignedAdminId
     };
     setRequests(prev => [newReq, ...prev]);
     setCurrentView('requests');

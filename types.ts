@@ -120,6 +120,7 @@ export interface UserProfile {
   department?: ServiceType;
   joinedAt?: string;
   status?: 'pending' | 'approved' | 'rejected';
+  assignedAdminId?: string;
 }
 
 export interface AppNotification {
@@ -169,6 +170,7 @@ export interface ServiceRequest {
   adminDocument?: FileMetadata;
   userDocument?: FileMetadata;
   certificateData?: CertificateData;
+  assignedAdminId?: string;
 }
 
 export interface FileMetadata {

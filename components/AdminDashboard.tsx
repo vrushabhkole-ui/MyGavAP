@@ -315,11 +315,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Citizens list filtered by search
   const villageCitizens = residents.filter(r => 
-    (managedState === 'All' || r.state === managedState) &&
-    (managedDistrict === 'All' || r.district === managedDistrict) &&
-    (managedVillage === 'All' || r.village === managedVillage) && 
-    (managedTaluka === 'All' || r.subDistrict === managedTaluka) &&
-    (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode) &&
+    (r.assignedAdminId === user.id || (!r.assignedAdminId && 
+      (managedState === 'All' || r.state === managedState) &&
+      (managedDistrict === 'All' || r.district === managedDistrict) &&
+      (managedVillage === 'All' || r.village === managedVillage) && 
+      (managedTaluka === 'All' || r.subDistrict === managedTaluka) &&
+      (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode)
+    )) &&
     (searchTerm === '' || r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -333,34 +335,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Filtered requests with status and search
   const filteredRequests = requests.filter(r => 
-    ((managedState === 'All' || r.state === managedState) && 
-     (managedDistrict === 'All' || r.district === managedDistrict) && 
-     (managedVillage === 'All' || r.village === managedVillage) && 
-     (managedTaluka === 'All' || r.subDistrict === managedTaluka) && 
-     (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode)) &&
-    (!dept || r.serviceId === dept) &&
+    (r.assignedAdminId === user.id || (!r.assignedAdminId && 
+      (managedState === 'All' || r.state === managedState) && 
+      (managedDistrict === 'All' || r.district === managedDistrict) && 
+      (managedVillage === 'All' || r.village === managedVillage) && 
+      (managedTaluka === 'All' || r.subDistrict === managedTaluka) && 
+      (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode) &&
+      (!dept || r.serviceId === dept)
+    )) &&
     (requestStatusFilter === 'All' || r.status === requestStatusFilter) &&
     (searchTerm === '' || r.userName.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredTransactions = transactions.filter(t => 
-    ((managedState === 'All' || t.state === managedState) && 
-     (managedDistrict === 'All' || t.district === managedDistrict) && 
-     (managedVillage === 'All' || t.village === managedVillage) && 
-     (managedTaluka === 'All' || t.subDistrict === managedTaluka) && 
-     (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode)) &&
-    isBillTypeForDept(t.type, dept) &&
+    (
+      (residents.find(r => r.id === t.userId)?.assignedAdminId === user.id) || 
+      (!residents.find(r => r.id === t.userId)?.assignedAdminId && 
+        (managedState === 'All' || t.state === managedState) && 
+        (managedDistrict === 'All' || t.district === managedDistrict) && 
+        (managedVillage === 'All' || t.village === managedVillage) && 
+        (managedTaluka === 'All' || t.subDistrict === managedTaluka) && 
+        (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode) &&
+        isBillTypeForDept(t.type, dept)
+      )
+    ) &&
     (searchTerm === '' || t.userName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Filtered bills with status and search
   const filteredBills = bills.filter(b => 
-    ((managedState === 'All' || b.state === managedState) && 
-     (managedDistrict === 'All' || b.district === managedDistrict) && 
-     (managedVillage === 'All' || b.village === managedVillage) && 
-     (managedTaluka === 'All' || b.subDistrict === managedTaluka) && 
-     (managedPincode === 'All' || managedPincode === '000000' || b.pincode === managedPincode)) &&
-    isBillTypeForDept(b.type, dept) &&
+    (
+      (residents.find(r => r.id === b.userId)?.assignedAdminId === user.id) || 
+      (!residents.find(r => r.id === b.userId)?.assignedAdminId && 
+        (managedState === 'All' || b.state === managedState) && 
+        (managedDistrict === 'All' || b.district === managedDistrict) && 
+        (managedVillage === 'All' || b.village === managedVillage) && 
+        (managedTaluka === 'All' || b.subDistrict === managedTaluka) && 
+        (managedPincode === 'All' || managedPincode === '000000' || b.pincode === managedPincode) &&
+        isBillTypeForDept(b.type, dept)
+      )
+    ) &&
     (billStatusFilter === 'All' || b.status === billStatusFilter) &&
     (searchTerm === '' || b.userId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -817,17 +831,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex items-center justify-between px-1">
                   <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pending User Approvals</h3>
                   <div className="bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full text-[8px] font-black uppercase">
-                    {residents.filter(r => r.village === managedVillage && r.status === 'pending').length} Pending
+                    {villageCitizens.filter(r => r.status === 'pending').length} Pending
                   </div>
                 </div>
                 
                 <div className="space-y-3">
-                  {residents.filter(r => r.village === managedVillage && r.status === 'pending').length === 0 ? (
+                  {villageCitizens.filter(r => r.status === 'pending').length === 0 ? (
                     <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
                        <p className="text-[9px] font-black uppercase tracking-widest">No pending approvals</p>
                     </div>
                   ) : (
-                    residents.filter(r => r.village === managedVillage && r.status === 'pending').map(res => (
+                    villageCitizens.filter(r => r.status === 'pending').map(res => (
                       <div 
                         key={res.id} 
                         className="w-full bg-white p-4 rounded-[28px] border border-slate-100 flex flex-col gap-4 shadow-sm"
