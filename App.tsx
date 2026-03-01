@@ -53,8 +53,6 @@ const App: React.FC = () => {
 
   // Persistence Helpers
   const syncToServer = async (path: string, data: any) => {
-    if (!isInitialLoadComplete) return;
-    
     const dataString = JSON.stringify(data);
     if (lastSyncedData.current[path] === dataString) {
       return; // Skip if data hasn't actually changed
@@ -109,7 +107,10 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const socket = io();
+    const socket = io({
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5
+    });
 
     socket.on('data-update-requests', (data) => { setRequests(data); });
     socket.on('data-update-bills', (data) => { setBills(data); });

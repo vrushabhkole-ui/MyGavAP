@@ -15,13 +15,6 @@ export const USER_REGISTRY_KEY = 'MYGAAV_USER_REGISTRY';
 const OFFICER_KEYS_KEY = 'MYGAAV_OFFICER_KEYS';
 const COLORS = ['bg-emerald-600', 'bg-indigo-600', 'bg-amber-600', 'bg-rose-600', 'bg-blue-600', 'bg-orange-600'];
 
-const DEMO_RESIDENT = {
-  email: 'resident@mygaav.com',
-  name: 'Rahul Deshmukh',
-  pass: 'pass123',
-  village: 'Sukhawadi'
-};
-
 interface LocationResult {
   Name: string;
   Block: string;
@@ -275,25 +268,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
   };
 
-  const handleQuickLogin = (type: 'resident' | 'officer') => {
-    if (type === 'resident') {
-      const profile: UserProfile = {
-        id: 'DEMO-RES-1',
-        name: DEMO_RESIDENT.name,
-        email: DEMO_RESIDENT.email,
-        state: 'Maharashtra',
-        district: 'Pune',
-        subDistrict: 'Haveli',
-        village: DEMO_RESIDENT.village,
-        role: 'user',
-        joinedAt: 'Demo Account',
-        status: 'approved'
-      };
-      saveToRegistry(profile, DEMO_RESIDENT.pass);
-      onLogin(profile);
-    }
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -312,11 +286,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
 
     if (isLogin) {
-      if (role === 'user' && emailKey === DEMO_RESIDENT.email && formData.password === DEMO_RESIDENT.pass) {
-        handleQuickLogin('resident');
-        return;
-      }
-
       try {
         const response = await fetch('/api/auth/login', {
           method: 'POST',

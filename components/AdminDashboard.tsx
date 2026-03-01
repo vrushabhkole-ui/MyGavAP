@@ -338,12 +338,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Filtered requests with status and search
   const filteredRequests = requests.filter(r => 
     (
-      (managedState === 'All' || r.state === managedState) && 
-      (managedDistrict === 'All' || r.district === managedDistrict) && 
-      (managedVillage === 'All' || r.village === managedVillage) && 
-      (managedTaluka === 'All' || r.subDistrict === managedTaluka) && 
-      (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode) &&
-      (!dept || r.serviceId === dept)
+      r.assignedAdminId === user.id ||
+      (
+        (managedState === 'All' || r.state === managedState) && 
+        (managedDistrict === 'All' || r.district === managedDistrict) && 
+        (managedVillage === 'All' || r.village === managedVillage) && 
+        (managedTaluka === 'All' || r.subDistrict === managedTaluka) && 
+        (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode) &&
+        (!dept || r.serviceId === dept)
+      )
     ) &&
     (requestStatusFilter === 'All' || r.status === requestStatusFilter) &&
     (searchTerm === '' || r.userName.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
