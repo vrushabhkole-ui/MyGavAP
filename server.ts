@@ -125,8 +125,7 @@ async function startServer() {
     const user = accounts.find((a: any) => 
       a.email.toLowerCase() === email.toLowerCase() && 
       a.password === password &&
-      a.role === role &&
-      (role === 'user' || a.department === department)
+      a.role === role
     );
 
     if (user) {

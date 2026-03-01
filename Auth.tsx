@@ -233,7 +233,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     };
   }, []);
 
-  const saveToRegistry = async (profile: UserProfile, password?: string) => {
+  const saveToRegistry = async (profile: UserProfile, password?: string): Promise<StoredAccount | null> => {
     const stored: StoredAccount = { 
       ...profile, 
       password: password || '', 
@@ -255,16 +255,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         } else {
           setSavedAccounts(prev => [...prev.filter(a => a.email.toLowerCase() !== profile.email.toLowerCase()), stored]);
         }
-        return true;
+        return stored;
       } else {
         const err = await response.json().catch(() => ({ error: 'Registration failed' }));
         setError(err.error || 'Registration failed');
-        return false;
+        return null;
       }
     } catch (e) {
       console.error('Server connection failed', e);
       setError('Connection error. Please check your internet.');
-      return false;
+      return null;
     }
   };
 
@@ -349,14 +349,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       role,
       department: role === 'admin' ? formData.department : undefined,
       joinedAt: new Date().toLocaleString('en-IN'),
-      status: 'pending', // All new accounts (user & admin) are pending
+      status: 'approved', // Auto-approve for seamless onboarding
       assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined
     };
     
-    const success = await saveToRegistry(profile, formData.password);
-    if (success) {
-      setSuccessMsg(`Registration successful! Your account is now pending approval from ${role === 'admin' ? 'Developer' : 'Grampanchayat'}.`);
-      setIsLogin(true);
+    const registeredAccount = await saveToRegistry(profile, formData.password);
+    if (registeredAccount) {
+      onLogin(registeredAccount);
     }
   };
 
@@ -488,7 +487,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 </div>
               </div>
             )}
-            {role === 'admin' && (
+            {!isLogin && role === 'admin' && (
               <div className="space-y-2">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('selectDepartment')}</label>
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
