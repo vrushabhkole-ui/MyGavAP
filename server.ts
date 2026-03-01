@@ -10,7 +10,24 @@ import { createServer } from "http";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(__dirname, "data");
+const DATA_DIR = (() => {
+  const defaultDir = path.join(__dirname, "data");
+  try {
+    if (!fs.existsSync(defaultDir)) {
+      fs.mkdirSync(defaultDir);
+    }
+    fs.accessSync(defaultDir, fs.constants.W_OK);
+    return defaultDir;
+  } catch (e) {
+    console.warn("Cannot write to default data directory, using /tmp/data");
+    const tmpDir = path.join("/tmp", "data");
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir);
+    }
+    return tmpDir;
+  }
+})();
+
 const REGISTRY_FILE = path.join(DATA_DIR, "registry.json");
 const REQUESTS_FILE = path.join(DATA_DIR, "requests.json");
 const BILLS_FILE = path.join(DATA_DIR, "bills.json");
@@ -20,14 +37,22 @@ const NOTIFS_FILE = path.join(DATA_DIR, "notifications.json");
 const BIZ_FILE = path.join(DATA_DIR, "businesses.json");
 const KEYS_FILE = path.join(DATA_DIR, "officer_keys.json");
 
-// Ensure data directory exists
+// Ensure data directory exists (double check)
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
+  try {
+    fs.mkdirSync(DATA_DIR);
+  } catch (e) {
+    console.error("Failed to create data directory:", e);
+  }
 }
 
 const initFile = (file: string, defaultData: any = []) => {
-  if (!fs.existsSync(file)) {
-    fs.writeFileSync(file, JSON.stringify(defaultData, null, 2));
+  try {
+    if (!fs.existsSync(file)) {
+      fs.writeFileSync(file, JSON.stringify(defaultData, null, 2));
+    }
+  } catch (e) {
+    console.error(`Failed to init file ${file}:`, e);
   }
 };
 
@@ -74,6 +99,12 @@ async function startServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+  // Request logging
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+  });
+
   // Helper to read/write
   const readData = (file: string) => {
     try {
@@ -98,6 +129,10 @@ async function startServer() {
   // API Routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/api/ping", (req, res) => {
+    res.json({ message: "pong" });
   });
 
   // Generic Data Routes

@@ -241,6 +241,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     };
     
     try {
+      // Check connectivity first
+      try {
+        const ping = await fetch('/api/ping');
+        if (!ping.ok) {
+          console.warn('API ping failed:', ping.status);
+        }
+      } catch (e) {
+        console.warn('API ping error:', e);
+      }
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
