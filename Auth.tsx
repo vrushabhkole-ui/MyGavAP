@@ -413,7 +413,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       village: formData.village,
       role,
       department: role === 'admin' ? formData.department : undefined,
-      joinedAt: new Date().toLocaleDateString('en-IN'),
+      joinedAt: new Date().toLocaleString('en-IN'),
       status: role === 'admin' ? 'approved' : 'pending',
       assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined
     };
