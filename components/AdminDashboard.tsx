@@ -5,9 +5,9 @@ import {
   FileText, ShieldCheck, History as HistoryIcon, Trash2, Download, 
   FileBadge, Users, TrendingUp, ChevronRight, User as UserIcon,
   ClipboardList, CreditCard, Search, IndianRupee, Phone, Mail, Globe, Building2, UserCheck,
-  UploadCloud, FileCheck, Save, MessageSquare, Store, Send, Check, Filter
+  UploadCloud, FileCheck, Save, MessageSquare, Store, Send, Check, Filter, Bell
 } from 'lucide-react';
-import { ServiceRequest, Language, RequestStatus, ServiceType, UserProfile, Bill, BillType, VillageNotice, FileMetadata, Transaction, LocalBusiness } from '../types.ts';
+import { ServiceRequest, Language, RequestStatus, ServiceType, UserProfile, Bill, BillType, VillageNotice, FileMetadata, Transaction, LocalBusiness, AppNotification } from '../types.ts';
 import { SERVICES, DICTIONARY } from '../constants.tsx';
 
 interface AdminDashboardProps {
@@ -19,6 +19,8 @@ interface AdminDashboardProps {
   notices: VillageNotice[];
   transactions: Transaction[];
   businesses: LocalBusiness[];
+  notifications: AppNotification[];
+  onOpenNotifications: () => void;
   onUpdateBusinesses: (biz: LocalBusiness[]) => void;
   onUpdateResidents: (residents: UserProfile[]) => void;
   onUpdateStatus: (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => void;
@@ -270,7 +272,7 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-  lang, user, requests, residents, bills, notices, transactions, businesses, onUpdateBusinesses,
+  lang, user, requests, residents, bills, notices, transactions, businesses, notifications, onOpenNotifications, onUpdateBusinesses,
   onUpdateResidents, onUpdateStatus, onIssueBill, onMarkBillPaid, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
 }) => {
   const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses' | 'approvals'>('requests');

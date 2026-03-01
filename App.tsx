@@ -217,7 +217,10 @@ const App: React.FC = () => {
     };
     setRequests(prev => [newReq, ...prev]);
     setCurrentView('requests');
-    addNotification('Request Submitted', `Your ticket for ${newReq.serviceTitle} has been received.`, 'success');
+    addNotification('Request Submitted', `Your ticket for ${newReq.serviceTitle} has been received.`, 'success', user.id);
+    if (user.assignedAdminId) {
+      addNotification('New Request', `${user.name} submitted a request for ${newReq.serviceTitle}.`, 'info', user.assignedAdminId);
+    }
   };
 
   const handleIssueNotice = (notice: VillageNotice) => {
@@ -232,11 +235,14 @@ const App: React.FC = () => {
 
   const updateRequestStatus = (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => {
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status, adminReport: report, adminDocument: adminDoc } : r));
-    addNotification('Ticket Update', `A request status has changed to ${status}.`, 'info');
+    const req = requests.find(r => r.id === id);
+    if (req) {
+      addNotification('Ticket Update', `Your request for ${req.serviceTitle} is now ${status}.`, 'info', req.userId);
+    }
   };
 
-  const addNotification = (title: string, message: string, type: 'info' | 'success' | 'alert') => {
-    const n: AppNotification = { id: Math.random().toString(36).substr(2, 9), title, message, type, time: 'Just now', read: false };
+  const addNotification = (title: string, message: string, type: 'info' | 'success' | 'alert', userId?: string) => {
+    const n: AppNotification = { id: Math.random().toString(36).substr(2, 9), userId, title, message, type, time: 'Just now', read: false };
     setNotifications(prev => [n, ...prev]);
   };
 
@@ -283,7 +289,10 @@ const App: React.FC = () => {
       status: 'Pending'
     };
     setBusinesses(prev => [...prev, newBiz]);
-    addNotification('Listing Received', `${newBiz.name} registration is pending officer approval.`, 'info');
+    addNotification('Listing Received', `${newBiz.name} registration is pending officer approval.`, 'info', user.id);
+    if (user.assignedAdminId) {
+      addNotification('New Business', `${user.name} registered ${newBiz.name}.`, 'info', user.assignedAdminId);
+    }
   };
 
   const t = (key: string) => DICTIONARY[key]?.[language] || key;
@@ -299,6 +308,8 @@ const App: React.FC = () => {
     n.pincode === user.pincode
   );
 
+  const userNotifications = notifications.filter(n => !n.userId || n.userId === user.id);
+
   return (
     <div className="max-w-md mx-auto bg-slate-50 h-[100dvh] relative shadow-2xl overflow-hidden flex flex-col">
       <main className="flex-1 overflow-hidden relative">
@@ -311,7 +322,14 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {user.role === 'admin' ? (
+        {currentView === 'notifications' ? (
+          <NotificationCenter 
+            notifications={userNotifications} 
+            onBack={() => setCurrentView(user.role === 'admin' ? 'admin' : 'dashboard')} 
+            onClearAll={() => setNotifications(prev => prev.filter(n => n.userId && n.userId !== user.id))} 
+            onMarkRead={(id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))} 
+          />
+        ) : user.role === 'admin' ? (
           <AdminDashboard 
             lang={language} 
             user={user} 
@@ -321,6 +339,8 @@ const App: React.FC = () => {
             notices={notices}
             transactions={transactions}
             businesses={businesses}
+            notifications={userNotifications}
+            onOpenNotifications={() => setCurrentView('notifications')}
             onUpdateBusinesses={handleUpdateBusinesses}
             onUpdateResidents={handleUpdateResidents}
             onUpdateStatus={updateRequestStatus} 
@@ -377,7 +397,7 @@ const App: React.FC = () => {
                 onRemoveVillage={(v) => {
                   setSelectedVillages(selectedVillages.filter(sv => sv !== v));
                 }}
-                hasUnread={notifications.some(n => !n.read)} 
+                hasUnread={userNotifications.some(n => !n.read)} 
               />
             )}
 
@@ -446,15 +466,6 @@ const App: React.FC = () => {
                 onBack={() => setCurrentView('dashboard')} 
                 onNewRequest={handleNewRequest} 
                 onUpdateStatus={updateRequestStatus} 
-              />
-            )}
-
-            {currentView === 'notifications' && (
-              <NotificationCenter 
-                notifications={notifications} 
-                onBack={() => setCurrentView('dashboard')} 
-                onClearAll={() => setNotifications([])} 
-                onMarkRead={(id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))} 
               />
             )}
 

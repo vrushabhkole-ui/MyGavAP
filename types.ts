@@ -125,6 +125,7 @@ export interface UserProfile {
 
 export interface AppNotification {
   id: string;
+  userId?: string;
   title: string;
   message: string;
   time: string;
