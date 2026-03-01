@@ -299,34 +299,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setSuccessMsg('');
     const emailKey = formData.email.trim().toLowerCase();
 
-    // Re-fetch accounts to ensure we have the latest
-    let currentAccounts = savedAccounts;
-    try {
-      const resp = await fetch('/api/accounts');
-      if (resp.ok) {
-        currentAccounts = await resp.json();
-        setSavedAccounts(currentAccounts);
-      } else {
-        const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
-        if (localAccounts.length > 0) {
-          currentAccounts = localAccounts;
-          setSavedAccounts(currentAccounts);
-        }
-      }
-    } catch (e) {
-      const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
-      if (localAccounts.length > 0) {
-        currentAccounts = localAccounts;
-        setSavedAccounts(currentAccounts);
-      }
-    }
-
-    const match = currentAccounts.find(a => 
-      a.email.toLowerCase() === emailKey && 
-      a.role === role && 
-      (role === 'user' || a.department === formData.department)
-    );
-
     if (!isLogin && role === 'admin') {
       if (!formData.officerKey) {
         setError('Officer Access Key is required');
@@ -339,24 +311,70 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
 
     if (isLogin) {
-      if (match && match.password === formData.password) {
-        if (match.role === 'user' && match.status === 'pending') {
-          setError('Your account is pending approval from Grampanchayat. Please try again later.');
-          return;
-        }
-        if (match.role === 'user' && match.status === 'rejected') {
-          setError('Your registration has been rejected. Please contact Grampanchayat.');
-          return;
-        }
-        onLogin(match);
-        return;
-      }
       if (role === 'user' && emailKey === DEMO_RESIDENT.email && formData.password === DEMO_RESIDENT.pass) {
         handleQuickLogin('resident');
         return;
       }
-      setError('Invalid credentials.');
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: emailKey,
+            password: formData.password,
+            role,
+            department: formData.department
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          onLogin(data.account);
+        } else {
+          setError(data.error || 'Invalid credentials.');
+        }
+      } catch (e) {
+        // Fallback to local storage if offline
+        const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+        const match = localAccounts.find((a: any) => 
+          a.email.toLowerCase() === emailKey && 
+          a.password === formData.password &&
+          a.role === role && 
+          (role === 'user' || a.department === formData.department)
+        );
+
+        if (match) {
+          if (match.role === 'user' && match.status === 'pending') {
+            setError('Your account is pending approval from Grampanchayat. Please try again later.');
+            return;
+          }
+          if (match.role === 'user' && match.status === 'rejected') {
+            setError('Your registration has been rejected. Please contact Grampanchayat.');
+            return;
+          }
+          onLogin(match);
+        } else {
+          setError('Invalid credentials or offline.');
+        }
+      }
       return;
+    }
+
+    // Registration flow
+    // Re-fetch accounts to ensure we have the latest for validation
+    let currentAccounts = savedAccounts;
+    try {
+      const resp = await fetch('/api/accounts');
+      if (resp.ok) {
+        currentAccounts = await resp.json();
+        setSavedAccounts(currentAccounts);
+      } else {
+        currentAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+      }
+    } catch (e) {
+      currentAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
     }
 
     // Check if email or mobile already exists

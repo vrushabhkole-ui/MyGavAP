@@ -221,15 +221,7 @@ const App: React.FC = () => {
 
   const handleIssueNotice = (notice: VillageNotice) => {
     if (!user) return;
-    const scopedNotice = { 
-      ...notice, 
-      state: user.state,
-      district: user.district,
-      village: user.village, 
-      subDistrict: user.subDistrict,
-      pincode: user.pincode
-    };
-    setNotices(prev => [scopedNotice, ...prev]);
+    setNotices(prev => [notice, ...prev]);
     addNotification('New Announcement', `Notice: ${notice.title} published.`, 'info');
   };
 
@@ -332,12 +324,7 @@ const App: React.FC = () => {
             onUpdateResidents={handleUpdateResidents}
             onUpdateStatus={updateRequestStatus} 
             onIssueBill={(b) => setBills(prev => [{ 
-              ...b, 
-              state: user.state,
-              district: user.district,
-              village: user.village, 
-              subDistrict: user.subDistrict,
-              pincode: user.pincode
+              ...b
             }, ...prev])} 
             onMarkBillPaid={(id) => {
               setBills(prev => prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b));

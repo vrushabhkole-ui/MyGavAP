@@ -315,50 +315,62 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Citizens list filtered by search
   const villageCitizens = residents.filter(r => 
-    r.state === managedState &&
-    r.district === managedDistrict &&
-    r.village === managedVillage && 
-    r.subDistrict === managedTaluka &&
-    r.pincode === managedPincode &&
+    (managedState === 'All' || r.state === managedState) &&
+    (managedDistrict === 'All' || r.district === managedDistrict) &&
+    (managedVillage === 'All' || r.village === managedVillage) && 
+    (managedTaluka === 'All' || r.subDistrict === managedTaluka) &&
+    (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode) &&
     (searchTerm === '' || r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const villageBusinesses = businesses.filter(b => 
-    b.state === managedState &&
-    b.district === managedDistrict &&
-    b.village === managedVillage && 
-    b.subDistrict === managedTaluka &&
-    b.pincode === managedPincode
+    (managedState === 'All' || b.state === managedState) &&
+    (managedDistrict === 'All' || b.district === managedDistrict) &&
+    (managedVillage === 'All' || b.village === managedVillage) && 
+    (managedTaluka === 'All' || b.subDistrict === managedTaluka) &&
+    (managedPincode === 'All' || managedPincode === '000000' || b.pincode === managedPincode)
   );
 
   // Filtered requests with status and search
   const filteredRequests = requests.filter(r => 
-    (r.state === managedState && r.district === managedDistrict && r.village === managedVillage && r.subDistrict === managedTaluka && r.pincode === managedPincode) &&
+    ((managedState === 'All' || r.state === managedState) && 
+     (managedDistrict === 'All' || r.district === managedDistrict) && 
+     (managedVillage === 'All' || r.village === managedVillage) && 
+     (managedTaluka === 'All' || r.subDistrict === managedTaluka) && 
+     (managedPincode === 'All' || managedPincode === '000000' || r.pincode === managedPincode)) &&
     (!dept || r.serviceId === dept) &&
     (requestStatusFilter === 'All' || r.status === requestStatusFilter) &&
     (searchTerm === '' || r.userName.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredTransactions = transactions.filter(t => 
-    (t.state === managedState && t.district === managedDistrict && t.village === managedVillage && t.subDistrict === managedTaluka && t.pincode === managedPincode) &&
+    ((managedState === 'All' || t.state === managedState) && 
+     (managedDistrict === 'All' || t.district === managedDistrict) && 
+     (managedVillage === 'All' || t.village === managedVillage) && 
+     (managedTaluka === 'All' || t.subDistrict === managedTaluka) && 
+     (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode)) &&
     isBillTypeForDept(t.type, dept) &&
     (searchTerm === '' || t.userName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Filtered bills with status and search
   const filteredBills = bills.filter(b => 
-    (b.state === managedState && b.district === managedDistrict && b.village === managedVillage && b.subDistrict === managedTaluka && b.pincode === managedPincode) &&
+    ((managedState === 'All' || b.state === managedState) && 
+     (managedDistrict === 'All' || b.district === managedDistrict) && 
+     (managedVillage === 'All' || b.village === managedVillage) && 
+     (managedTaluka === 'All' || b.subDistrict === managedTaluka) && 
+     (managedPincode === 'All' || managedPincode === '000000' || b.pincode === managedPincode)) &&
     isBillTypeForDept(b.type, dept) &&
     (billStatusFilter === 'All' || b.status === billStatusFilter) &&
     (searchTerm === '' || b.userId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   const filteredNotices = notices.filter(n => 
-    n.state === managedState &&
-    n.district === managedDistrict &&
-    n.village === managedVillage && 
-    n.subDistrict === managedTaluka &&
-    n.pincode === managedPincode
+    (managedState === 'All' || n.state === managedState) &&
+    (managedDistrict === 'All' || n.district === managedDistrict) &&
+    (managedVillage === 'All' || n.village === managedVillage) && 
+    (managedTaluka === 'All' || n.subDistrict === managedTaluka) &&
+    (managedPincode === 'All' || managedPincode === '000000' || n.pincode === managedPincode)
   );
 
   const [billingData, setBillingData] = useState({ 
@@ -369,7 +381,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
   });
 
-  const totalRevenue = transactions.filter(t => t.village === managedVillage && t.status === 'Success' && isBillTypeForDept(t.type, dept)).reduce((acc, t) => acc + t.amount, 0);
+  const totalRevenue = transactions.filter(t => 
+    (managedState === 'All' || t.state === managedState) && 
+    (managedDistrict === 'All' || t.district === managedDistrict) && 
+    (managedVillage === 'All' || t.village === managedVillage) && 
+    (managedTaluka === 'All' || t.subDistrict === managedTaluka) && 
+    (managedPincode === 'All' || managedPincode === '000000' || t.pincode === managedPincode) &&
+    t.status === 'Success' && 
+    isBillTypeForDept(t.type, dept)
+  ).reduce((acc, t) => acc + t.amount, 0);
   const themeBg = (SERVICES.find(s => s.id === user.department)?.color || 'bg-slate-900');
 
   const handlePostNotice = (e: React.FormEvent) => {

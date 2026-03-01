@@ -133,6 +133,30 @@ async function startServer() {
   });
 
   // Specific Auth Routes
+  app.post("/api/auth/login", (req, res) => {
+    const { email, password, role, department } = req.body;
+    const accounts = readData(REGISTRY_FILE);
+    
+    const user = accounts.find((a: any) => 
+      a.email.toLowerCase() === email.toLowerCase() && 
+      a.password === password &&
+      a.role === role &&
+      (role === 'user' || a.department === department)
+    );
+
+    if (user) {
+      if (user.role === 'user' && user.status === 'pending') {
+        return res.status(403).json({ error: 'Your account is pending approval from Grampanchayat. Please try again later.' });
+      }
+      if (user.role === 'user' && user.status === 'rejected') {
+        return res.status(403).json({ error: 'Your registration has been rejected. Please contact Grampanchayat.' });
+      }
+      res.json({ success: true, account: user });
+    } else {
+      res.status(401).json({ error: "Invalid credentials." });
+    }
+  });
+
   app.post("/api/auth/register", (req, res) => {
     const newAccount = req.body;
     const accounts = readData(REGISTRY_FILE);
