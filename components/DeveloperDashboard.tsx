@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, StoredAccount } from '../types.ts';
-import { CheckCircle2, XCircle, Loader2, ShieldAlert, LogOut, Search, MapPin, Phone, Mail } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ShieldAlert, LogOut, Search, MapPin, Phone, Mail, RefreshCcw } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 interface DeveloperDashboardProps {
@@ -13,25 +13,43 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const fetchAccounts = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch from server
+      const res = await fetch('/api/accounts');
+      let serverData: StoredAccount[] = [];
+      if (res.ok) {
+        serverData = await res.json();
+      }
+
+      // Fetch from local storage (fallback for offline registrations)
+      const localData = JSON.parse(localStorage.getItem('MYGAAV_USER_REGISTRY') || '[]') as StoredAccount[];
+      
+      // Merge data, preferring server data but including local-only data
+      const mergedMap = new Map<string, StoredAccount>();
+      
+      // Add local data first
+      localData.forEach(acc => mergedMap.set(acc.id, acc));
+      
+      // Overwrite with server data (source of truth)
+      serverData.forEach(acc => mergedMap.set(acc.id, acc));
+      
+      setAccounts(Array.from(mergedMap.values()));
+    } catch (e) {
+      console.error("Failed to fetch accounts", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const socket = io();
     socket.on('data-update-accounts', (data) => {
+      console.log("Received account update via socket", data);
       setAccounts(data);
     });
 
-    const fetchAccounts = async () => {
-      try {
-        const res = await fetch('/api/accounts');
-        if (res.ok) {
-          const data = await res.json();
-          setAccounts(data);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchAccounts();
 
     return () => {
@@ -58,15 +76,17 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
       });
     } catch (e) {
       console.error("Failed to update account", e);
-      // Revert if failed (could implement revert logic here)
     }
   };
 
   const pendingAdmins = accounts.filter(a => 
+    a &&
     a.role === 'admin' && 
     a.status === 'pending' &&
-    (a.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-     a.village.toLowerCase().includes(searchQuery.toLowerCase()))
+    (
+      (a.name && a.name.toLowerCase().includes(searchQuery.toLowerCase())) || 
+      (a.village && a.village.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
   );
 
   return (
@@ -82,9 +102,14 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
             <p className="text-[10px] font-bold text-slate-400">System Administrator</p>
           </div>
         </div>
-        <button onClick={onLogout} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={fetchAccounts} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors" title="Refresh Data">
+            <RefreshCcw size={18} />
+          </button>
+          <button onClick={onLogout} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors" title="Logout">
+            <LogOut size={18} />
+          </button>
+        </div>
       </header>
 
       <main className="pt-24 px-4 pb-12 max-w-3xl mx-auto space-y-6">
@@ -117,6 +142,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
               <CheckCircle2 size={32} />
             </div>
             <p className="text-sm font-bold text-slate-400">All caught up! No pending requests.</p>
+            <p className="text-[10px] text-slate-300 mt-2">New admin registrations will appear here.</p>
           </div>
         ) : (
           <div className="space-y-4">
