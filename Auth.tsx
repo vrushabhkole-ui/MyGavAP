@@ -257,8 +257,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         }
         return stored;
       } else {
-        const err = await response.json().catch(() => ({ error: 'Registration failed' }));
-        setError(err.error || 'Registration failed');
+        const text = await response.text();
+        try {
+            const err = JSON.parse(text);
+            setError(err.error || 'Registration failed');
+        } catch (e) {
+            console.error('Registration failed, non-JSON response:', text);
+            setError('Registration failed. Server returned unexpected response.');
+        }
         return null;
       }
     } catch (e) {
@@ -330,7 +336,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       setError('This email is already registered. Please login instead.');
       return;
     }
-    if (formData.mobile && currentAccounts.some((a: any) => a.mobile && a.mobile === formData.mobile)) {
+    if (formData.mobile && currentAccounts.some((a: any) => a.mobile && String(a.mobile) === String(formData.mobile))) {
       setError('This mobile number is already registered. Please use a different one.');
       return;
     }

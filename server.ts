@@ -145,22 +145,31 @@ async function startServer() {
   });
 
   app.post("/api/auth/register", (req, res) => {
-    const newAccount = req.body;
-    const accounts = readData(REGISTRY_FILE);
-    
-    const exists = accounts.find((a: any) => 
-      (a.email && newAccount.email && a.email.toLowerCase() === newAccount.email.toLowerCase()) || 
-      (newAccount.mobile && a.mobile && a.mobile === newAccount.mobile)
-    );
+    try {
+      const newAccount = req.body;
+      // console.log("Registering:", newAccount.email, newAccount.role);
+      let accounts = readData(REGISTRY_FILE);
+      if (!Array.isArray(accounts)) {
+        accounts = [];
+      }
+      
+      const exists = accounts.find((a: any) => 
+        (a.email && newAccount.email && a.email.toLowerCase() === newAccount.email.toLowerCase()) || 
+        (newAccount.mobile && a.mobile && String(a.mobile) === String(newAccount.mobile))
+      );
 
-    if (exists) {
-      return res.status(400).json({ error: "Account already exists." });
+      if (exists) {
+        return res.status(400).json({ error: "Account already exists." });
+      }
+
+      accounts.push(newAccount);
+      saveData(REGISTRY_FILE, accounts);
+      io.emit('data-update-accounts', accounts);
+      res.json({ success: true, account: newAccount, accounts });
+    } catch (e) {
+      console.error("Registration error:", e);
+      res.status(500).json({ error: "Registration failed due to server error." });
     }
-
-    accounts.push(newAccount);
-    saveData(REGISTRY_FILE, accounts);
-    io.emit('data-update-accounts', accounts);
-    res.json({ success: true, account: newAccount, accounts });
   });
 
   // Clear all data
