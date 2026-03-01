@@ -67,25 +67,29 @@ initFile(NOTIFS_FILE, []);
 initFile(BIZ_FILE, []);
 
 // Initialize Officer Keys if not present
-if (!fs.existsSync(KEYS_FILE)) {
-  const keys = new Set<string>();
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const permanentKeys = [
-    'OFFICER01', 'OFFICER02', 'OFFICER03', 'OFFICER04', 'OFFICER05',
-    'MAHA7788', 'PUNE9900', 'GAAV1122', 'FIELD556', 'ADMIN889',
-    'KEY2024X', 'KEY2025Y', 'VILLAGE1', 'GAAVHUB9',
-    'K8J2M4P9', 'L7N3Q5R1', 'B6V9X2Z4', 'H1G5F8D3', 'S0A2W4E6'
-  ];
-  permanentKeys.forEach(k => keys.add(k));
-  
-  while (keys.size < 1000) { // Reduced for performance, can be larger
-    let key = '';
-    for (let i = 0; i < 8; i++) {
-      key += chars.charAt(Math.floor(Math.random() * chars.length));
+try {
+  if (!fs.existsSync(KEYS_FILE)) {
+    const keys = new Set<string>();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const permanentKeys = [
+      'OFFICER01', 'OFFICER02', 'OFFICER03', 'OFFICER04', 'OFFICER05',
+      'MAHA7788', 'PUNE9900', 'GAAV1122', 'FIELD556', 'ADMIN889',
+      'KEY2024X', 'KEY2025Y', 'VILLAGE1', 'GAAVHUB9',
+      'K8J2M4P9', 'L7N3Q5R1', 'B6V9X2Z4', 'H1G5F8D3', 'S0A2W4E6'
+    ];
+    permanentKeys.forEach(k => keys.add(k));
+    
+    while (keys.size < 1000) { // Reduced for performance, can be larger
+      let key = '';
+      for (let i = 0; i < 8; i++) {
+        key += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      keys.add(key);
     }
-    keys.add(key);
+    fs.writeFileSync(KEYS_FILE, JSON.stringify(Array.from(keys), null, 2));
   }
-  fs.writeFileSync(KEYS_FILE, JSON.stringify(Array.from(keys), null, 2));
+} catch (e) {
+  console.error("Failed to initialize officer keys:", e);
 }
 
 async function startServer() {
@@ -117,7 +121,15 @@ async function startServer() {
       return [];
     }
   };
-  const saveData = (file: string, data: any) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
+  
+  const saveData = (file: string, data: any) => {
+    try {
+      fs.writeFileSync(file, JSON.stringify(data, null, 2));
+    } catch (e) {
+      console.error(`Error writing to ${file}:`, e);
+      throw e;
+    }
+  };
 
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
@@ -211,9 +223,13 @@ async function startServer() {
       saveData(REGISTRY_FILE, accounts);
       io.emit('data-update-accounts', accounts);
       res.json({ success: true, account: newAccount, accounts });
-    } catch (e) {
+    } catch (e: any) {
       console.error("Registration error:", e);
-      res.status(500).json({ error: "Registration failed due to server error." });
+      res.status(500).json({ 
+        error: "Registration failed due to server error.", 
+        details: e.message,
+        stack: process.env.NODE_ENV !== 'production' ? e.stack : undefined
+      });
     }
   });
 
@@ -229,6 +245,12 @@ async function startServer() {
       }
     });
     res.json({ message: "All data cleared successfully." });
+  });
+
+  // Global error handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("Unhandled server error:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   });
 
   // Vite middleware for development
