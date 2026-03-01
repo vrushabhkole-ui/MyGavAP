@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search, X, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldAlert, UserCheck, Trash2, Eye, EyeOff, MapPin, Globe, Building2, Map, ShieldCheck, AlertCircle, Briefcase, Edit3, ChevronDown, CheckCircle2, Building, Zap, Flame, FileText, HeartPulse, ShoppingBasket, Phone, Hash, BriefcaseBusiness, Key, Search, X, Loader2, Code } from 'lucide-react';
 import Logo from './components/Logo.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { UserProfile, UserRole, ServiceType, StoredAccount } from './types.ts';
@@ -363,6 +363,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             setError('Your account is pending approval from Grampanchayat. Please try again later.');
             return;
           }
+          if (match.role === 'admin' && match.status === 'pending') {
+            setError('Your account is pending approval from Developer. Please try again later.');
+            return;
+          }
           if (match.role === 'user' && match.status === 'rejected') {
             setError('Your registration has been rejected. Please contact Grampanchayat.');
             return;
@@ -414,20 +418,90 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       role,
       department: role === 'admin' ? formData.department : undefined,
       joinedAt: new Date().toLocaleString('en-IN'),
-      status: role === 'admin' ? 'approved' : 'pending',
+      status: 'pending', // All new accounts (user & admin) are pending
       assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined
     };
     
     const success = await saveToRegistry(profile, formData.password);
     if (success) {
-      if (role === 'admin') {
-        onLogin(profile);
-      } else {
-        setSuccessMsg('Registration successful! Your account is now pending approval from Grampanchayat.');
-        setIsLogin(true);
-      }
+      setSuccessMsg(`Registration successful! Your account is now pending approval from ${role === 'admin' ? 'Developer' : 'Grampanchayat'}.`);
+      setIsLogin(true);
     }
   };
+
+  if (role === 'developer') {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-slate-900 flex flex-col items-center justify-center p-6">
+        <div className="bg-white rounded-3xl p-8 w-full shadow-2xl space-y-6">
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white">
+              <Code size={24} />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-widest">Developer Console</h2>
+          </div>
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (formData.email === 'dev@gmail.com' && formData.password === 'dev1008') {
+               const devProfile: UserProfile = {
+                 id: 'DEV-MASTER',
+                 name: 'System Developer',
+                 email: 'dev@gmail.com',
+                 role: 'developer',
+                 state: 'Maharashtra',
+                 district: 'Pune',
+                 subDistrict: 'Haveli',
+                 village: 'Sukhawadi',
+                 status: 'approved'
+               };
+               onLogin(devProfile);
+            } else {
+              setError('Invalid Developer Credentials');
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Developer ID</label>
+              <input 
+                type="email" 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-slate-900 transition-colors"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+                placeholder="dev@gmail.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Key</label>
+              <input 
+                type="password" 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-slate-900 transition-colors"
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                placeholder="•••••••"
+              />
+            </div>
+            
+            {error && <p className="text-xs font-bold text-rose-500 text-center">{error}</p>}
+
+            <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-colors">
+              Access Console
+            </button>
+            
+            <button 
+              type="button" 
+              onClick={() => {
+                setRole('user');
+                setError('');
+                setFormData({...formData, email: '', password: ''});
+              }}
+              className="w-full py-3 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Back to App
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
@@ -606,6 +680,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             {savedAccounts.filter(a => 
                               a.role === 'admin' && 
                               a.department === ServiceType.GRAMPANCHAYAT &&
+                              a.status === 'approved' &&
                               (adminSearchQuery.length > 0
                                 ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
                                    a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
@@ -616,6 +691,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                               savedAccounts.filter(a => 
                                 a.role === 'admin' && 
                                 a.department === ServiceType.GRAMPANCHAYAT &&
+                                a.status === 'approved' &&
                                 (adminSearchQuery.length > 0
                                   ? (a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
                                      a.village.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
@@ -704,6 +780,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               {isLogin ? t('signInSecurely') : t('createAccount')}
             </button>
           </form>
+        </div>
+        
+        <div className="flex justify-center pb-8">
+           <button onClick={() => {
+             setRole('developer');
+             setFormData({...formData, email: '', password: ''});
+             setError('');
+           }} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-colors">
+             <Code size={14} /> Developer Access
+           </button>
         </div>
       </div>
     </div>

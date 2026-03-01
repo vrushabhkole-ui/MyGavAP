@@ -1,6 +1,6 @@
 
 export type Language = 'en' | 'hi' | 'mr';
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | 'developer';
 
 export enum ServiceType {
   GRAMPANCHAYAT = 'grampanchayat',

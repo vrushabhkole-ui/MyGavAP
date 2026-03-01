@@ -148,6 +148,9 @@ async function startServer() {
       if (user.role === 'user' && user.status === 'pending') {
         return res.status(403).json({ error: 'Your account is pending approval from Grampanchayat. Please try again later.' });
       }
+      if (user.role === 'admin' && user.status === 'pending') {
+        return res.status(403).json({ error: 'Your account is pending approval from Developer. Please try again later.' });
+      }
       if (user.role === 'user' && user.status === 'rejected') {
         return res.status(403).json({ error: 'Your registration has been rejected. Please contact Grampanchayat.' });
       }

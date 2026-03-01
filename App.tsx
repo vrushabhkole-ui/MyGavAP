@@ -7,6 +7,7 @@ import AISahayak from './components/AISahayak.tsx';
 import Auth from './Auth.tsx';
 import ServiceRequestsView from './components/ServiceRequestsView.tsx';
 import AdminDashboard from './components/AdminDashboard.tsx';
+import DeveloperDashboard from './components/DeveloperDashboard.tsx';
 import ServiceDetail from './components/ServiceDetail.tsx';
 import NotificationCenter from './components/NotificationCenter.tsx';
 import CertificateForm from './components/CertificateForm.tsx';
@@ -329,6 +330,8 @@ const App: React.FC = () => {
             onClearAll={() => setNotifications(prev => prev.filter(n => n.userId && n.userId !== user.id))} 
             onMarkRead={(id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))} 
           />
+        ) : user.role === 'developer' ? (
+          <DeveloperDashboard user={user} onLogout={handleLogout} />
         ) : user.role === 'admin' ? (
           <AdminDashboard 
             lang={language} 
