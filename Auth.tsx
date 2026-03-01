@@ -263,7 +263,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             setError(err.error || 'Registration failed');
         } catch (e) {
             console.error('Registration failed, non-JSON response:', text);
-            setError('Registration failed. Server returned unexpected response.');
+            setError(`Registration failed. Server returned unexpected response: ${response.status} ${response.statusText}. Details: ${text.substring(0, 50)}...`);
         }
         return null;
       }

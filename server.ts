@@ -75,7 +75,17 @@ async function startServer() {
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // Helper to read/write
-  const readData = (file: string) => JSON.parse(fs.readFileSync(file, "utf-8"));
+  const readData = (file: string) => {
+    try {
+      if (!fs.existsSync(file)) return [];
+      const content = fs.readFileSync(file, "utf-8");
+      if (!content.trim()) return [];
+      return JSON.parse(content);
+    } catch (e) {
+      console.error(`Error reading ${file}:`, e);
+      return [];
+    }
+  };
   const saveData = (file: string, data: any) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
   io.on("connection", (socket) => {
