@@ -13,14 +13,10 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const getApiUrl = (path: string) => {
-    return path.startsWith('/') ? path : `/${path}`;
-  };
-
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(getApiUrl('/api/accounts'));
+      const res = await fetch('/api/accounts');
       if (res.ok) {
         const serverData = await res.json();
         setAccounts(serverData);
@@ -61,7 +57,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
     setAccounts(updatedAccounts as StoredAccount[]);
 
     try {
-      await fetch(getApiUrl('/api/accounts'), {
+      await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedAccounts)

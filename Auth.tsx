@@ -183,13 +183,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
-  const getApiUrl = (path: string) => {
-    return path.startsWith('/') ? path : `/${path}`;
-  };
-
   const checkServer = () => {
     setServerStatus('checking');
-    const url = getApiUrl(`/api/health?t=${Date.now()}`);
+    const url = `/api/health?t=${Date.now()}`;
     console.log('Checking server at:', url);
     fetch(url)
       .then(res => {
@@ -235,8 +231,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     const fetchData = async () => {
       try {
         const [accResp, keyResp] = await Promise.all([
-          fetch(getApiUrl('/api/accounts')).catch(() => null),
-          fetch(getApiUrl('/api/officer-keys')).catch(() => null)
+          fetch('/api/accounts').catch(() => null),
+          fetch('/api/officer-keys').catch(() => null)
         ]);
         
         if (accResp && accResp.ok) {
@@ -281,7 +277,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     try {
       // Check connectivity first
       try {
-        const ping = await fetch(getApiUrl(`/api/ping?t=${Date.now()}`));
+        const ping = await fetch(`/api/ping?t=${Date.now()}`);
         if (!ping.ok) {
           console.warn('API ping failed:', ping.status);
         }
@@ -289,7 +285,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         console.warn('API ping error:', e);
       }
 
-      const registerUrl = getApiUrl(`/api/auth/register?t=${Date.now()}`);
+      const registerUrl = `/api/auth/register?t=${Date.now()}`;
       console.log('Attempting registration at:', registerUrl);
       const response = await fetch(registerUrl, {
         method: 'POST',
@@ -347,7 +343,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
     if (isLogin) {
       try {
-      const loginUrl = getApiUrl(`/api/auth/login?t=${Date.now()}`);
+      const loginUrl = `/api/auth/login?t=${Date.now()}`;
       console.log('Attempting login at:', loginUrl);
       const response = await fetch(loginUrl, {
         method: 'POST',
@@ -378,7 +374,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     // Re-fetch accounts to ensure we have the latest for validation
     let currentAccounts = savedAccounts;
     try {
-      const resp = await fetch(getApiUrl('/api/accounts'));
+      const resp = await fetch('/api/accounts');
       if (resp.ok) {
         currentAccounts = await resp.json();
         setSavedAccounts(currentAccounts);
