@@ -184,23 +184,33 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   const getApiUrl = (path: string) => {
-    const baseUrl = process.env.APP_URL || '';
-    return `${baseUrl}${path}`;
+    // Use relative paths for same-origin requests
+    // This is safer for custom domains behind proxies
+    return path;
   };
 
   const checkServer = () => {
     setServerStatus('checking');
-    fetch(getApiUrl(`/api/health?t=${Date.now()}`))
+    const url = getApiUrl(`/api/health?t=${Date.now()}`);
+    console.log('Checking server at:', url);
+    fetch(url)
       .then(res => {
         if (res.ok) {
           res.json().then(data => {
+            console.log('Server response:', data);
             setServerStatus('online');
             setServerVersion(data.version || 'unknown');
           });
         }
-        else setServerStatus('offline');
+        else {
+          console.warn('Server check failed with status:', res.status);
+          setServerStatus('offline');
+        }
       })
-      .catch(() => setServerStatus('offline'));
+      .catch(err => {
+        console.error('Server check error:', err);
+        setServerStatus('offline');
+      });
   };
 
   useEffect(() => {
@@ -278,7 +288,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         console.warn('API ping error:', e);
       }
 
-      const response = await fetch(getApiUrl(`/api/auth/register?t=${Date.now()}`), {
+      const registerUrl = getApiUrl(`/api/auth/register?t=${Date.now()}`);
+      console.log('Attempting registration at:', registerUrl);
+      const response = await fetch(registerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(stored)
@@ -334,16 +346,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
     if (isLogin) {
       try {
-        const response = await fetch(getApiUrl(`/api/auth/login?t=${Date.now()}`), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: emailKey,
-            password: formData.password,
-            role,
-            department: formData.department
-          })
-        });
+      const loginUrl = getApiUrl(`/api/auth/login?t=${Date.now()}`);
+      console.log('Attempting login at:', loginUrl);
+      const response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailKey,
+          password: formData.password,
+          role,
+          department: formData.department
+        })
+      });
 
         const data = await response.json();
 
