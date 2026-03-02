@@ -200,9 +200,25 @@ async function startServer() {
     }
   });
 
+  // Global error handler for uncaught exceptions to prevent server crash
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+
   app.post("/api/auth/register", (req, res) => {
+    console.log("Received registration request for:", req.body?.email);
     try {
       const newAccount = req.body;
+      
+      if (!newAccount || !newAccount.email) {
+        console.error("Registration failed: Missing email");
+        return res.status(400).json({ error: "Invalid data: Email is required" });
+      }
+
       // console.log("Registering:", newAccount.email, newAccount.role);
       let accounts = readData(REGISTRY_FILE);
       if (!Array.isArray(accounts)) {
@@ -215,12 +231,14 @@ async function startServer() {
       );
 
       if (exists) {
+        console.log("Registration failed: Account exists", newAccount.email);
         return res.status(400).json({ error: "Account already exists." });
       }
 
       accounts.push(newAccount);
       saveData(REGISTRY_FILE, accounts);
       io.emit('data-update-accounts', accounts);
+      console.log("Registration successful for:", newAccount.email);
       res.json({ success: true, account: newAccount, accounts });
     } catch (e: any) {
       console.error("Registration error:", e);

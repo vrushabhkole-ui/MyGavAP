@@ -179,7 +179,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     return serverOfficerKeys.includes(upperKey);
   };
 
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+
   useEffect(() => {
+    // Check server health immediately
+    fetch('/api/health')
+      .then(res => {
+        if (res.ok) setServerStatus('online');
+        else setServerStatus('offline');
+      })
+      .catch(() => setServerStatus('offline'));
+
     // Wipe old localStorage data on first load of this update
     const dataCleared = localStorage.getItem('MYGAAV_DATA_WIPED_V4');
     if (!dataCleared) {
@@ -273,7 +283,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             setError(err.details ? `${err.error} (${err.details})` : (err.error || 'Registration failed'));
         } catch (e) {
             console.error('Registration failed, non-JSON response:', text);
-            setError(`Registration failed. Server returned unexpected response: ${response.status} ${response.statusText}. Details: ${text.substring(0, 50)}...`);
+            if (response.status === 404) {
+              setError('Registration failed. The server API endpoint was not found (404). This usually means the server is restarting or misconfigured. Please refresh and try again.');
+            } else {
+              setError(`Registration failed. Server returned unexpected response: ${response.status} ${response.statusText}. Details: ${text.substring(0, 50)}...`);
+            }
         }
         return null;
       }
@@ -458,6 +472,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-lg text-[10px] font-black ${lang === l ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>{l.toUpperCase()}</button>
           ))}
         </div>
+        
+        {serverStatus === 'offline' && (
+          <div className="mt-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            Server Offline / Unreachable
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 hide-scrollbar space-y-8">
