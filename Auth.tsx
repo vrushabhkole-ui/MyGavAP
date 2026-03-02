@@ -181,14 +181,31 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
-  useEffect(() => {
-    // Check server health immediately
-    fetch('/api/health')
+  const [serverVersion, setServerVersion] = useState<string | null>(null);
+
+  const getApiUrl = (path: string) => {
+    const baseUrl = process.env.APP_URL || '';
+    return `${baseUrl}${path}`;
+  };
+
+  const checkServer = () => {
+    setServerStatus('checking');
+    fetch(getApiUrl(`/api/health?t=${Date.now()}`))
       .then(res => {
-        if (res.ok) setServerStatus('online');
+        if (res.ok) {
+          res.json().then(data => {
+            setServerStatus('online');
+            setServerVersion(data.version || 'unknown');
+          });
+        }
         else setServerStatus('offline');
       })
       .catch(() => setServerStatus('offline'));
+  };
+
+  useEffect(() => {
+    // Check server health immediately
+    checkServer();
 
     // Wipe old localStorage data on first load of this update
     const dataCleared = localStorage.getItem('MYGAAV_DATA_WIPED_V4');
@@ -253,7 +270,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     try {
       // Check connectivity first
       try {
-        const ping = await fetch('/api/ping');
+        const ping = await fetch(getApiUrl(`/api/ping?t=${Date.now()}`));
         if (!ping.ok) {
           console.warn('API ping failed:', ping.status);
         }
@@ -261,7 +278,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         console.warn('API ping error:', e);
       }
 
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(getApiUrl(`/api/auth/register?t=${Date.now()}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(stored)
@@ -317,7 +334,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
     if (isLogin) {
       try {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch(getApiUrl(`/api/auth/login?t=${Date.now()}`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -474,9 +491,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         </div>
         
         {serverStatus === 'offline' && (
-          <div className="mt-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            Server Offline / Unreachable
+          <div className="mt-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              Server Offline / Unreachable
+            </div>
+            <button onClick={checkServer} className="bg-rose-600 text-white px-2 py-0.5 rounded-md hover:bg-rose-700 transition-colors">RETRY</button>
+          </div>
+        )}
+        {serverStatus === 'checking' && (
+          <div className="mt-2 px-3 py-1 bg-amber-100 text-amber-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500 animate-spin" />
+            Checking Server...
+          </div>
+        )}
+        {serverStatus === 'online' && (
+          <div className="mt-2 px-3 py-1 bg-emerald-100 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              Server Online
+            </div>
+            {serverVersion && <span className="opacity-50">v{serverVersion}</span>}
           </div>
         )}
       </div>
@@ -756,9 +791,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             )}
 
             {error && (
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600">
-                <AlertCircle size={18} />
-                <p className="text-[10px] font-black uppercase tracking-widest leading-tight">{error}</p>
+              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex flex-col gap-3 text-rose-600">
+                <div className="flex items-center gap-3">
+                  <AlertCircle size={18} />
+                  <p className="text-[10px] font-black uppercase tracking-widest leading-tight flex-1">{error}</p>
+                </div>
+                <button type="button" onClick={() => window.location.reload()} className="bg-rose-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-700 transition-colors self-start">Refresh Page</button>
               </div>
             )}
             {successMsg && (

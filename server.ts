@@ -138,11 +138,11 @@ async function startServer() {
   });
 
   // API Routes
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+  app.get(["/api/health", "/api/health/"], (req, res) => {
+    res.json({ status: "ok", version: "1.0.2", time: new Date().toISOString() });
   });
 
-  app.get("/api/ping", (req, res) => {
+  app.get(["/api/ping", "/api/ping/"], (req, res) => {
     res.json({ message: "pong" });
   });
 
@@ -158,23 +158,23 @@ async function startServer() {
   ];
 
   dataRoutes.forEach(route => {
-    app.get(`/api/${route.path}`, (req, res) => {
+    app.get([`/api/${route.path}`, `/api/${route.path}/`], (req, res) => {
       res.json(readData(route.file));
     });
 
-    app.post(`/api/${route.path}`, (req, res) => {
+    app.post([`/api/${route.path}`, `/api/${route.path}/`], (req, res) => {
       saveData(route.file, req.body);
       io.emit(`data-update-${route.path}`, req.body);
       res.json({ success: true });
     });
   });
 
-  app.get("/api/officer-keys", (req, res) => {
+  app.get(["/api/officer-keys", "/api/officer-keys/"], (req, res) => {
     res.json(readData(KEYS_FILE));
   });
 
   // Specific Auth Routes
-  app.post("/api/auth/login", (req, res) => {
+  app.post(["/api/auth/login", "/api/auth/login/"], (req, res) => {
     const { email, password, role, department } = req.body;
     const accounts = readData(REGISTRY_FILE);
     
@@ -209,7 +209,7 @@ async function startServer() {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
-  app.post("/api/auth/register", (req, res) => {
+  app.post(["/api/auth/register", "/api/auth/register/"], (req, res) => {
     console.log("Received registration request for:", req.body?.email);
     try {
       const newAccount = req.body;
@@ -251,7 +251,7 @@ async function startServer() {
   });
 
   // Clear all data
-  app.post("/api/admin/clear-data", (req, res) => {
+  app.post(["/api/admin/clear-data", "/api/admin/clear-data/"], (req, res) => {
     dataRoutes.forEach(r => {
       if (r.path === 'accounts') {
         saveData(r.file, SYSTEM_ACCOUNTS);
@@ -271,9 +271,14 @@ async function startServer() {
   });
 
   // Catch-all for API 404s (Must be before frontend middleware)
-  app.use("/api/*", (req, res) => {
+  app.all("/api/*", (req, res) => {
     console.log(`404 API Request: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ error: "API endpoint not found" });
+    res.status(404).json({ 
+      error: "API endpoint not found", 
+      method: req.method, 
+      url: req.originalUrl,
+      help: "Check if the route is defined in server.ts and if the method matches."
+    });
   });
 
   // Vite middleware for development
@@ -309,7 +314,8 @@ async function startServer() {
   }
 
   httpServer.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://0.0.0.0:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    console.log(`Data directory: ${DATA_DIR}`);
   });
 }
 
