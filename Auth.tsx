@@ -184,9 +184,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   const getApiUrl = (path: string) => {
-    // Use relative paths for same-origin requests
-    // This is safer for custom domains behind proxies
-    return path;
+    const baseUrl = process.env.APP_URL || '';
+    const cleanBase = baseUrl.replace(/\/$/, '');
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBase}${cleanPath}`;
   };
 
   const checkServer = () => {
@@ -225,7 +226,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       localStorage.setItem('MYGAAV_DATA_WIPED_V4', 'true');
     }
 
-    const socket = io();
+    const socketUrl = process.env.APP_URL || '';
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5
+    });
     socket.on('data-update-accounts', (data) => {
       setSavedAccounts(data);
     });
@@ -234,8 +239,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     const fetchData = async () => {
       try {
         const [accResp, keyResp] = await Promise.all([
-          fetch('/api/accounts').catch(() => null),
-          fetch('/api/officer-keys').catch(() => null)
+          fetch(getApiUrl('/api/accounts')).catch(() => null),
+          fetch(getApiUrl('/api/officer-keys')).catch(() => null)
         ]);
         
         if (accResp && accResp.ok) {
@@ -377,7 +382,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     // Re-fetch accounts to ensure we have the latest for validation
     let currentAccounts = savedAccounts;
     try {
-      const resp = await fetch('/api/accounts');
+      const resp = await fetch(getApiUrl('/api/accounts'));
       if (resp.ok) {
         currentAccounts = await resp.json();
         setSavedAccounts(currentAccounts);

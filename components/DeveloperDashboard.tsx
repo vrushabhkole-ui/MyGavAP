@@ -13,10 +13,17 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const getApiUrl = (path: string) => {
+    const baseUrl = process.env.APP_URL || '';
+    const cleanBase = baseUrl.replace(/\/$/, '');
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBase}${cleanPath}`;
+  };
+
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/accounts');
+      const res = await fetch(getApiUrl('/api/accounts'));
       if (res.ok) {
         const serverData = await res.json();
         setAccounts(serverData);
@@ -29,7 +36,11 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   };
 
   useEffect(() => {
-    const socket = io();
+    const socketUrl = process.env.APP_URL || '';
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5
+    });
     socket.on('data-update-accounts', (data) => {
       console.log("Received account update via socket", data);
       setAccounts(data);
@@ -54,7 +65,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
     setAccounts(updatedAccounts as StoredAccount[]);
 
     try {
-      await fetch('/api/accounts', {
+      await fetch(getApiUrl('/api/accounts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedAccounts)

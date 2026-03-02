@@ -51,6 +51,13 @@ const App: React.FC = () => {
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const lastSyncedData = React.useRef<Record<string, string>>({});
 
+  const getApiUrl = (path: string) => {
+    const baseUrl = process.env.APP_URL || '';
+    const cleanBase = baseUrl.replace(/\/$/, '');
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBase}${cleanPath}`;
+  };
+
   // Persistence Helpers
   const syncToServer = async (path: string, data: any) => {
     const dataString = JSON.stringify(data);
@@ -60,7 +67,7 @@ const App: React.FC = () => {
     lastSyncedData.current[path] = dataString;
 
     try {
-      const response = await fetch(`/api/${path}`, {
+      const response = await fetch(getApiUrl(`/api/${path}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: dataString
@@ -96,7 +103,7 @@ const App: React.FC = () => {
 
   const loadResidentsFromServer = async () => {
     try {
-      const response = await fetch('/api/accounts');
+      const response = await fetch(getApiUrl('/api/accounts'));
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         setResidents(allUsers.filter(u => u.role === 'user'));
@@ -107,7 +114,8 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const socket = io({
+    const socketUrl = process.env.APP_URL || '';
+    const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5
     });
@@ -135,7 +143,7 @@ const App: React.FC = () => {
 
     const loadFromServer = async (path: string, setter: Function) => {
       try {
-        const response = await fetch(`/api/${path}`);
+        const response = await fetch(getApiUrl(`/api/${path}`));
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) setter(data);
@@ -272,7 +280,7 @@ const App: React.FC = () => {
   const handleUpdateResidents = async (updatedResidents: UserProfile[]) => {
     setResidents(updatedResidents);
     try {
-      const response = await fetch('/api/accounts');
+      const response = await fetch(getApiUrl('/api/accounts'));
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         const newAllUsers = allUsers.map(u => {
