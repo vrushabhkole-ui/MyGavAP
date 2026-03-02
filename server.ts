@@ -140,12 +140,12 @@ async function startServer() {
   });
 
   // API Routes
-  app.get(["/api/health", "/api/health/"], (req, res) => {
+  app.get("/api/health", (req, res) => {
     console.log("Health check request received");
     res.json({ status: "ok", version: "1.0.3", time: new Date().toISOString() });
   });
 
-  app.get(["/api/ping", "/api/ping/"], (req, res) => {
+  app.get("/api/ping", (req, res) => {
     res.json({ message: "pong" });
   });
 
@@ -161,23 +161,23 @@ async function startServer() {
   ];
 
   dataRoutes.forEach(route => {
-    app.get([`/api/${route.path}`, `/api/${route.path}/`], (req, res) => {
+    app.get(`/api/${route.path}`, (req, res) => {
       res.json(readData(route.file));
     });
 
-    app.post([`/api/${route.path}`, `/api/${route.path}/`], (req, res) => {
+    app.post(`/api/${route.path}`, (req, res) => {
       saveData(route.file, req.body);
       io.emit(`data-update-${route.path}`, req.body);
       res.json({ success: true });
     });
   });
 
-  app.get(["/api/officer-keys", "/api/officer-keys/"], (req, res) => {
+  app.get("/api/officer-keys", (req, res) => {
     res.json(readData(KEYS_FILE));
   });
 
   // Specific Auth Routes
-  app.post(["/api/auth/login", "/api/auth/login/"], (req, res) => {
+  app.post("/api/auth/login", (req, res) => {
     const { email, password, role, department } = req.body;
     const accounts = readData(REGISTRY_FILE);
     
@@ -212,7 +212,7 @@ async function startServer() {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
-  app.post(["/api/auth/register", "/api/auth/register/"], (req, res) => {
+  app.post("/api/auth/register", (req, res) => {
     console.log("Received registration request for:", req.body?.email);
     try {
       const newAccount = req.body;
@@ -254,7 +254,7 @@ async function startServer() {
   });
 
   // Clear all data
-  app.post(["/api/admin/clear-data", "/api/admin/clear-data/"], (req, res) => {
+  app.post("/api/admin/clear-data", (req, res) => {
     dataRoutes.forEach(r => {
       if (r.path === 'accounts') {
         saveData(r.file, SYSTEM_ACCOUNTS);

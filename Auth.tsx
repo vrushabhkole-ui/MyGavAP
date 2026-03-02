@@ -184,10 +184,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   const getApiUrl = (path: string) => {
-    const baseUrl = process.env.APP_URL || '';
-    const cleanBase = baseUrl.replace(/\/$/, '');
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    return `${cleanBase}${cleanPath}`;
+    return path.startsWith('/') ? path : `/${path}`;
   };
 
   const checkServer = () => {
@@ -226,8 +223,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       localStorage.setItem('MYGAAV_DATA_WIPED_V4', 'true');
     }
 
-    const socketUrl = process.env.APP_URL || '';
-    const socket = io(socketUrl, {
+    const socket = io({
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5
     });
