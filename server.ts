@@ -222,6 +222,14 @@ async function startServer() {
         return res.status(400).json({ error: "Invalid data: Email is required" });
       }
 
+      if (newAccount.mobile && !/^\d{10}$/.test(String(newAccount.mobile))) {
+        return res.status(400).json({ error: "Invalid mobile number. Must be 10 digits." });
+      }
+
+      if (newAccount.pincode && !/^\d{6}$/.test(String(newAccount.pincode))) {
+        return res.status(400).json({ error: "Invalid pincode. Must be 6 digits." });
+      }
+
       // console.log("Registering:", newAccount.email, newAccount.role);
       let accounts = readData(REGISTRY_FILE);
       if (!Array.isArray(accounts)) {

@@ -570,70 +570,92 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 </div>
               </div>
             )}
-            {!isLogin && role === 'admin' && (
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('selectDepartment')}</label>
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-                  <BriefcaseBusiness size={18} className="text-indigo-600" />
-                  <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value as ServiceType})}>
-                    {DEPARTMENTS.map(dept => <option key={dept.id} value={dept.id}>{dept.label}</option>)}
-                  </select>
+            {isLogin ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                  <Mail size={18} className="text-slate-400" />
+                  <input required type="email" placeholder={t('emailAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                </div>
+
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                  <Lock size={18} className="text-slate-400" />
+                  <input required type={showPass ? "text" : "password"} placeholder={t('password')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                  <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
-            )}
-
-            {!isLogin && (
-              <>
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-                  <User size={18} className="text-slate-400" />
-                  <input required placeholder={t('fullName')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            ) : (
+              <div className="space-y-6">
+                {/* Personal Details */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Personal Details</h3>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                    <User size={18} className="text-slate-400" />
+                    <input required placeholder={t('fullName')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                    <Phone size={18} className="text-slate-400" />
+                    <input required type="tel" pattern="[0-9]{10}" maxLength={10} placeholder={t('mobileNumber')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-                  <Phone size={18} className="text-slate-400" />
-                  <input required type="tel" placeholder={t('mobileNumber')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
+
+                {/* Account Details */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Account Details</h3>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                    <Mail size={18} className="text-slate-400" />
+                    <input required type="email" placeholder={t('emailAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                    <Lock size={18} className="text-slate-400" />
+                    <input required type={showPass ? "text" : "password"} placeholder={t('password')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
-              </>
-            )}
 
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-              <Mail size={18} className="text-slate-400" />
-              <input required type="email" placeholder={t('emailAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-            </div>
+                {/* Role Specific Details */}
+                {role === 'admin' && (
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Officer Details</h3>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('selectDepartment')}</label>
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                        <BriefcaseBusiness size={18} className="text-indigo-600" />
+                        <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value as ServiceType})}>
+                          {DEPARTMENTS.map(dept => <option key={dept.id} value={dept.id}>{dept.label}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Officer Access Key</label>
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                        <Key size={18} className="text-indigo-600" />
+                        <input required placeholder="Enter 8-Character Key" className="bg-transparent outline-none text-sm w-full font-black text-slate-800 uppercase" maxLength={8} value={formData.officerKey} onChange={e => setFormData({...formData, officerKey: e.target.value})} />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-              <Lock size={18} className="text-slate-400" />
-              <input required type={showPass ? "text" : "password"} placeholder={t('password')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-              <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-300">
-                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            {!isLogin && role === 'admin' && (
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Officer Access Key</label>
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-                  <Key size={18} className="text-indigo-600" />
-                  <input required placeholder="Enter 8-Character Key" className="bg-transparent outline-none text-sm w-full font-black text-slate-800 uppercase" maxLength={8} value={formData.officerKey} onChange={e => setFormData({...formData, officerKey: e.target.value})} />
-                </div>
-              </div>
-            )}
-
-            {!isLogin && (
-              <div className="space-y-4 pt-4">
-                <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('villageConnectivity')}</h3>
-                <VillageSearch 
-                  t={t}
-                  onSelect={(loc) => {
-                    setFormData({
-                      ...formData,
-                      state: loc.State || '',
-                      district: loc.District || '',
-                      subDistrict: (loc.Block && loc.Block !== 'NA') ? loc.Block : (loc.Division && loc.Division !== 'NA' ? loc.Division : ''),
-                      village: loc.Name || '',
-                      pincode: loc.Pincode || ''
-                    });
-                  }}
-                />
+                {/* Location Details */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">{t('villageConnectivity')}</h3>
+                  <VillageSearch 
+                    t={t}
+                    onSelect={(loc) => {
+                      setFormData({
+                        ...formData,
+                        state: loc.State || '',
+                        district: loc.District || '',
+                        subDistrict: (loc.Block && loc.Block !== 'NA') ? loc.Block : (loc.Division && loc.Division !== 'NA' ? loc.Division : ''),
+                        village: loc.Name || '',
+                        pincode: loc.Pincode || ''
+                      });
+                    }}
+                  />
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
                       <Globe size={18} className="text-slate-400" />
@@ -645,7 +667,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
                       <Building2 size={18} className="text-slate-400" />
                       <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict || ''} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
                     </div>
@@ -655,7 +677,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     </div>
                   </div>
                   
-                  {!isLogin && role === 'admin' && (
+                  {role === 'admin' && (
                     <div className="flex items-center gap-2 px-2 py-1">
                       <input 
                         type="checkbox" 
@@ -677,44 +699,60 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     <Hash size={18} className="text-slate-400" />
                     <input required readOnly placeholder={t('pincode')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.pincode || ''} />
                   </div>
+                  
+                  <div className="flex items-start gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                    <Edit3 size={18} className="text-slate-400 mt-0.5" />
+                    <textarea rows={3} placeholder={t('physicalAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800 resize-none" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                  </div>
+                </div>
 
-                  {!isLogin && role === 'user' && (
-                    <div className="space-y-4 pt-4 border-t border-slate-100">
-                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Select Admin</h3>
-                      <div className="relative">
-                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                          <Search size={18} className="text-slate-400" />
-                          <input 
-                            type="text"
-                            placeholder="Search admin by name or village..."
-                            className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
-                            value={adminSearchQuery}
-                            onChange={(e) => {
-                              setAdminSearchQuery(e.target.value);
-                              setShowAdminDropdown(true);
-                              if (formData.assignedAdminId) {
-                                setFormData({...formData, assignedAdminId: ''});
-                              }
+                {/* Admin Selection for Users */}
+                {role === 'user' && (
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Select Admin</h3>
+                    <div className="relative">
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                        <Search size={18} className="text-slate-400" />
+                        <input 
+                          type="text"
+                          placeholder="Search admin by name or village..."
+                          className="bg-transparent outline-none text-sm w-full font-black text-slate-800"
+                          value={adminSearchQuery}
+                          onChange={(e) => {
+                            setAdminSearchQuery(e.target.value);
+                            setShowAdminDropdown(true);
+                            if (formData.assignedAdminId) {
+                              setFormData({...formData, assignedAdminId: ''});
+                            }
+                          }}
+                          onFocus={() => setShowAdminDropdown(true)}
+                        />
+                        {adminSearchQuery.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAdminSearchQuery('');
+                              setFormData({...formData, assignedAdminId: ''});
+                              setShowAdminDropdown(false);
                             }}
-                            onFocus={() => setShowAdminDropdown(true)}
-                          />
-                          {adminSearchQuery.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAdminSearchQuery('');
-                                setFormData({...formData, assignedAdminId: ''});
-                                setShowAdminDropdown(false);
-                              }}
-                              className="p-1 hover:bg-slate-200 rounded-full transition-colors"
-                            >
-                              <X size={16} className="text-slate-400" />
-                            </button>
-                          )}
-                        </div>
-                        {showAdminDropdown && (
-                          <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
-                            {savedAccounts.filter(a => 
+                            className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+                          >
+                            <X size={16} className="text-slate-400" />
+                          </button>
+                        )}
+                      </div>
+                      {showAdminDropdown && (
+                        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+                          {savedAccounts.filter(a => 
+                            a.role === 'admin' && 
+                            (adminSearchQuery.length > 0
+                              ? ((a.name && a.name.toLowerCase().includes(adminSearchQuery.toLowerCase())) || 
+                                 (a.village && a.village.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
+                                 (a.subDistrict && a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
+                                 (a.district && a.district.toLowerCase().includes(adminSearchQuery.toLowerCase())))
+                              : true)
+                          ).length > 0 ? (
+                            savedAccounts.filter(a => 
                               a.role === 'admin' && 
                               (adminSearchQuery.length > 0
                                 ? ((a.name && a.name.toLowerCase().includes(adminSearchQuery.toLowerCase())) || 
@@ -722,82 +760,74 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                                    (a.subDistrict && a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
                                    (a.district && a.district.toLowerCase().includes(adminSearchQuery.toLowerCase())))
                                 : true)
-                            ).length > 0 ? (
-                              savedAccounts.filter(a => 
-                                a.role === 'admin' && 
-                                (adminSearchQuery.length > 0
-                                  ? ((a.name && a.name.toLowerCase().includes(adminSearchQuery.toLowerCase())) || 
-                                     (a.village && a.village.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
-                                     (a.subDistrict && a.subDistrict.toLowerCase().includes(adminSearchQuery.toLowerCase())) ||
-                                     (a.district && a.district.toLowerCase().includes(adminSearchQuery.toLowerCase())))
-                                  : true)
-                              ).map(admin => (
-                                <button
-                                  key={admin.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setFormData({...formData, assignedAdminId: admin.id});
-                                    setAdminSearchQuery(admin.name);
-                                    setShowAdminDropdown(false);
-                                  }}
-                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-sm font-bold text-slate-800">{admin.name}</p>
-                                    {admin.status === 'pending' && (
-                                      <span className="text-[8px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">Pending</span>
-                                    )}
-                                  </div>
-                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
-                                    {admin.department ? DICTIONARY[admin.department]?.en || admin.department : 'Admin'} • {admin.village}
-                                  </p>
-                                </button>
-                              ))
-                            ) : (
-                              <div className="px-4 py-3 text-sm text-slate-500 text-center">No admins found</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {formData.assignedAdminId && (
-                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-start gap-3">
-                          <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="text-xs font-bold text-emerald-800">Admin Selected</p>
-                            <p className="text-[10px] text-emerald-600 mt-0.5">Your requests will be sent to this admin permanently.</p>
-                          </div>
+                            ).map(admin => (
+                              <button
+                                key={admin.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData({...formData, assignedAdminId: admin.id});
+                                  setAdminSearchQuery(admin.name);
+                                  setShowAdminDropdown(false);
+                                }}
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-bold text-slate-800">{admin.name}</p>
+                                  {admin.status === 'pending' && (
+                                    <span className="text-[8px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">Pending</span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                                  {admin.department ? DICTIONARY[admin.department]?.en || admin.department : 'Admin'} • {admin.village}
+                                </p>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-slate-500 text-center">No admins found</div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
+                    {formData.assignedAdminId && (
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-start gap-3">
+                        <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-emerald-800">Admin Selected</p>
+                          <p className="text-[10px] text-emerald-600 mt-0.5">Your requests will be sent to this admin permanently.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                <div className="grid grid-cols-1 gap-3 pt-4">
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <Building size={16} className="text-slate-400" />
-                    <input placeholder={t('gramPanchayatId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.gpId} onChange={e => setFormData({...formData, gpId: e.target.value})} />
+                {/* Optional Service IDs */}
+                {role === 'user' && (
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Service IDs (Optional)</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                        <Building size={16} className="text-slate-400" />
+                        <input placeholder={t('gramPanchayatId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.gpId} onChange={e => setFormData({...formData, gpId: e.target.value})} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                        <Zap size={16} className="text-slate-400" />
+                        <input placeholder={t('electricityConsumerNo')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.electricityNo} onChange={e => setFormData({...formData, electricityNo: e.target.value})} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                        <Flame size={16} className="text-slate-400" />
+                        <input placeholder={t('gasConsumerId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.gasId} onChange={e => setFormData({...formData, gasId: e.target.value})} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                        <FileText size={16} className="text-slate-400" />
+                        <input placeholder={t('chavdiAccountNo')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.chavdiNo} onChange={e => setFormData({...formData, chavdiNo: e.target.value})} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+                        <HeartPulse size={16} className="text-slate-400" />
+                        <input placeholder={t('healthId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.healthId} onChange={e => setFormData({...formData, healthId: e.target.value})} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <Zap size={16} className="text-slate-400" />
-                    <input placeholder={t('electricityConsumerNo')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.electricityNo} onChange={e => setFormData({...formData, electricityNo: e.target.value})} />
-                  </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <Flame size={16} className="text-slate-400" />
-                    <input placeholder={t('gasConsumerId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.gasId} onChange={e => setFormData({...formData, gasId: e.target.value})} />
-                  </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <FileText size={16} className="text-slate-400" />
-                    <input placeholder={t('chavdiAccountNo')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.chavdiNo} onChange={e => setFormData({...formData, chavdiNo: e.target.value})} />
-                  </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                    <HeartPulse size={16} className="text-slate-400" />
-                    <input placeholder={t('healthId')} className="bg-transparent outline-none text-[11px] w-full font-black text-slate-800" value={formData.healthId} onChange={e => setFormData({...formData, healthId: e.target.value})} />
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
-                  <Edit3 size={18} className="text-slate-400 mt-0.5" />
-                  <textarea rows={3} placeholder={t('physicalAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800 resize-none" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
-                </div>
+                )}
               </div>
             )}
 
