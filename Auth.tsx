@@ -359,19 +359,25 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         })
       });
 
+      if (response.ok) {
         const data = await response.json();
-
-        if (response.ok) {
-          onLogin(data.account);
-        } else {
+        onLogin(data.account);
+      } else {
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
           setError(data.error || 'Invalid credentials.');
+        } catch (e) {
+          console.error('Failed to parse error response:', text);
+          setError(`Login failed (${response.status}). Please try again.`);
         }
-      } catch (e) {
-        console.error('Login error', e);
-        setError('Connection error. Please check your internet.');
       }
-      return;
+    } catch (e) {
+      console.error('Login error', e);
+      setError('Connection error. Please check your internet.');
     }
+    return;
+  }
 
     // Registration flow
     // Re-fetch accounts to ensure we have the latest for validation
@@ -410,13 +416,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       role,
       department: role === 'admin' ? formData.department : undefined,
       joinedAt: new Date().toLocaleString('en-IN'),
-      status: 'approved', // Auto-approve for seamless onboarding
+      status: role === 'user' ? 'pending' : 'approved',
       assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined
     };
     
     const registeredAccount = await saveToRegistry(profile, formData.password);
     if (registeredAccount) {
-      onLogin(registeredAccount);
+      if (role === 'user') {
+        setIsLogin(true);
+        setError('');
+        alert('Account created successfully! Your request has been sent to the village admin. You will be able to login once approved.');
+      } else {
+        onLogin(registeredAccount);
+      }
     }
   };
 

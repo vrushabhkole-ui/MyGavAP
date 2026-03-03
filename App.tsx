@@ -98,7 +98,7 @@ const App: React.FC = () => {
 
   const loadResidentsFromServer = async () => {
     try {
-      const response = await fetch(getApiUrl('/api/accounts'));
+      const response = await fetch(getApiUrl('/api/accounts'), { cache: 'no-store' });
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         setResidents(allUsers.filter(u => u.role === 'user'));
@@ -138,7 +138,7 @@ const App: React.FC = () => {
 
     const loadFromServer = async (path: string, setter: Function) => {
       try {
-        const response = await fetch(getApiUrl(`/api/${path}`));
+        const response = await fetch(getApiUrl(`/api/${path}`), { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) setter(data);
@@ -273,15 +273,17 @@ const App: React.FC = () => {
   };
 
   const handleUpdateResidents = async (updatedResidents: UserProfile[]) => {
+    console.log("Updating residents:", updatedResidents);
     setResidents(updatedResidents);
     try {
-      const response = await fetch(getApiUrl('/api/accounts'));
+      const response = await fetch(getApiUrl('/api/accounts'), { cache: 'no-store' });
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         const newAllUsers = allUsers.map(u => {
           const found = updatedResidents.find(r => r.id === u.id);
           return found ? { ...u, ...found } : u;
         });
+        console.log("New all users:", newAllUsers);
         await syncToServer('accounts', newAllUsers);
       }
     } catch (e) {

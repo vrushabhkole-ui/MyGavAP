@@ -178,6 +178,7 @@ async function startServer() {
 
   // Specific Auth Routes
   app.post(["/api/auth/login", "/api/auth/login/"], (req, res) => {
+    console.log("Login request received for:", req.body?.email);
     const { email, password, role, department } = req.body;
     const accounts = readData(REGISTRY_FILE);
     
@@ -188,6 +189,7 @@ async function startServer() {
     );
 
     if (user) {
+      console.log("Login successful for:", email);
       if (user.role === 'user' && user.status === 'pending') {
         return res.status(403).json({ error: 'Your account is pending approval from Grampanchayat. Please try again later.' });
       }
@@ -283,11 +285,12 @@ async function startServer() {
 
   // Catch-all for API 404s (Must be before frontend middleware)
   app.use("/api", (req, res) => {
-    console.log(`404 API Request: ${req.method} ${req.originalUrl}`);
+    console.log(`404 API Request: ${req.method} ${req.url} (Original: ${req.originalUrl})`);
     res.status(404).json({ 
       error: "API endpoint not found", 
       method: req.method, 
-      url: req.originalUrl,
+      url: req.url,
+      originalUrl: req.originalUrl,
       help: "Check if the route is defined in server.ts and if the method matches."
     });
   });
