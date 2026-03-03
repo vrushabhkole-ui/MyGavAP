@@ -542,11 +542,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           </div>
         </section>
 
-        <div className="bg-white rounded-[40px] p-8 shadow-xl border border-slate-100">
-          <div className="flex bg-slate-50 p-1 rounded-xl mb-8 border border-slate-100">
-            <button type="button" onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${isLogin ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'}`}>Login</button>
-            <button type="button" onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${!isLogin ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'}`}>Signup</button>
-          </div>
+        <div className="bg-white rounded-[40px] p-8 shadow-xl border border-slate-100 relative overflow-hidden">
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <div className="flex bg-slate-50 p-1.5 rounded-2xl mb-8 border border-slate-100 shadow-inner">
+              <button type="button" onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Login</button>
+              <button type="button" onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${!isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Signup</button>
+            </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
             {isLogin && savedAccounts.length > 0 && (
@@ -574,78 +579,117 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               </div>
             )}
             {isLogin ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                  <Mail size={18} className="text-slate-400" />
-                  <input required type="email" placeholder={t('emailAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              <div className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Email Address</label>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all shadow-sm">
+                    <Mail size={18} className="text-emerald-600" />
+                    <input required type="email" placeholder="Enter your email" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                  <Lock size={18} className="text-slate-400" />
-                  <input required type={showPass ? "text" : "password"} placeholder={t('password')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-300 hover:text-slate-500 transition-colors">
-                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Password</label>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all shadow-sm">
+                    <Lock size={18} className="text-emerald-600" />
+                    <input required type={showPass ? "text" : "password"} placeholder="Enter your password" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-400 hover:text-emerald-600 transition-colors p-1 rounded-full hover:bg-emerald-50">
+                      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Personal Details */}
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Personal Details</h3>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                    <User size={18} className="text-slate-400" />
-                    <input required placeholder={t('fullName')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 px-2 border-b border-slate-100 pb-3">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <User size={12} className="text-emerald-600" />
+                    </div>
+                    <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Personal Details</h3>
                   </div>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                    <Phone size={18} className="text-slate-400" />
-                    <input required type="tel" pattern="[0-9]{10}" maxLength={10} placeholder={t('mobileNumber')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} />
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all shadow-sm">
+                      <User size={18} className="text-emerald-600" />
+                      <input required placeholder="Full Name" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all shadow-sm">
+                      <Phone size={18} className="text-emerald-600" />
+                      <input required type="tel" pattern="[0-9]{10}" maxLength={10} placeholder="Mobile Number (10 digits)" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} />
+                    </div>
                   </div>
                 </div>
 
                 {/* Account Details */}
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Account Details</h3>
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                    <Mail size={18} className="text-slate-400" />
-                    <input required type="email" placeholder={t('emailAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 px-2 border-b border-slate-100 pb-3">
+                    <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                      <Lock size={12} className="text-indigo-600" />
+                    </div>
+                    <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Account Details</h3>
                   </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:bg-white transition-all shadow-sm">
+                      <Mail size={18} className="text-indigo-600" />
+                      <input required type="email" placeholder="Email Address" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    </div>
 
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                    <Lock size={18} className="text-slate-400" />
-                    <input required type={showPass ? "text" : "password"} placeholder={t('password')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                    <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-300 hover:text-slate-500 transition-colors">
-                      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:bg-white transition-all shadow-sm">
+                      <Lock size={18} className="text-indigo-600" />
+                      <input required type={showPass ? "text" : "password"} placeholder="Create Password" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="text-slate-400 hover:text-indigo-600 transition-colors p-1 rounded-full hover:bg-indigo-50">
+                        {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Role Specific Details */}
                 {role === 'admin' && (
-                  <div className="space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">Officer Details</h3>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">{t('selectDepartment')}</label>
-                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
-                        <BriefcaseBusiness size={18} className="text-indigo-600" />
-                        <select className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value as ServiceType})}>
-                          {DEPARTMENTS.map(dept => <option key={dept.id} value={dept.id}>{dept.label}</option>)}
-                        </select>
+                  <div className="space-y-5 bg-slate-900 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    
+                    <div className="flex items-center gap-2 border-b border-slate-700 pb-3 relative z-10">
+                      <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                        <ShieldAlert size={12} className="text-indigo-400" />
                       </div>
+                      <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Officer Details</h3>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Officer Access Key</label>
-                      <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
-                        <Key size={18} className="text-indigo-600" />
-                        <input required placeholder="Enter 8-Character Key" className="bg-transparent outline-none text-sm w-full font-black text-slate-800 uppercase" maxLength={8} value={formData.officerKey} onChange={e => setFormData({...formData, officerKey: e.target.value})} />
+                    
+                    <div className="space-y-4 relative z-10">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Department</label>
+                        <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20 transition-all">
+                          <BriefcaseBusiness size={18} className="text-indigo-400" />
+                          <select className="bg-transparent outline-none text-sm w-full font-bold text-white appearance-none" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value as ServiceType})}>
+                            {DEPARTMENTS.map(dept => <option key={dept.id} value={dept.id} className="bg-slate-800 text-white">{dept.label}</option>)}
+                          </select>
+                          <ChevronDown size={16} className="text-slate-500 pointer-events-none" />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Access Key</label>
+                        <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20 transition-all">
+                          <Key size={18} className="text-indigo-400" />
+                          <input required placeholder="Enter 8-Character Key" className="bg-transparent outline-none text-sm w-full font-bold text-white uppercase placeholder:text-slate-500" maxLength={8} value={formData.officerKey} onChange={e => setFormData({...formData, officerKey: e.target.value})} />
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Location Details */}
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 border-b border-slate-100 pb-2">{t('villageConnectivity')}</h3>
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 px-2 border-b border-slate-100 pb-3">
+                    <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
+                      <MapPin size={12} className="text-amber-600" />
+                    </div>
+                    <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Village Connectivity</h3>
+                  </div>
+                  
                   <VillageSearch 
                     t={t}
                     onSelect={(loc) => {
@@ -659,33 +703,35 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                       });
                     }}
                   />
+                  
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
-                      <Globe size={18} className="text-slate-400" />
-                      <input required readOnly placeholder={t('state')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.state || ''} />
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 opacity-80 shadow-sm">
+                      <Globe size={16} className="text-slate-400" />
+                      <input required readOnly placeholder="State" className="bg-transparent outline-none text-xs w-full font-bold text-slate-800" value={formData.state || ''} />
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
-                      <Map size={18} className="text-slate-400" />
-                      <input required readOnly placeholder={t('district')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.district || ''} />
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 opacity-80 shadow-sm">
+                      <Map size={16} className="text-slate-400" />
+                      <input required readOnly placeholder="District" className="bg-transparent outline-none text-xs w-full font-bold text-slate-800" value={formData.district || ''} />
                     </div>
                   </div>
+                  
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                      <Building2 size={18} className="text-slate-400" />
-                      <input required placeholder={t('taluka')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.subDistrict || ''} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 focus-within:bg-white transition-all shadow-sm">
+                      <Building2 size={16} className="text-amber-600" />
+                      <input required placeholder="Taluka" className="bg-transparent outline-none text-xs w-full font-bold text-slate-800 placeholder:font-medium" value={formData.subDistrict || ''} onChange={e => setFormData({...formData, subDistrict: e.target.value})} />
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
-                      <MapPin size={18} className="text-slate-400" />
-                      <input required readOnly placeholder={t('village')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.village || ''} />
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 opacity-80 shadow-sm">
+                      <MapPin size={16} className="text-slate-400" />
+                      <input required readOnly placeholder="Village" className="bg-transparent outline-none text-xs w-full font-bold text-slate-800" value={formData.village || ''} />
                     </div>
                   </div>
                   
                   {role === 'admin' && (
-                    <div className="flex items-center gap-2 px-2 py-1">
+                    <div className="flex items-center gap-3 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
                       <input 
                         type="checkbox" 
                         id="manageAll" 
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         checked={formData.village === 'All'}
                         onChange={(e) => {
                           if (e.target.checked) {
@@ -695,17 +741,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                           }
                         }}
                       />
-                      <label htmlFor="manageAll" className="text-[10px] font-black text-slate-600 uppercase tracking-widest cursor-pointer">Manage all villages in Taluka</label>
+                      <label htmlFor="manageAll" className="text-[10px] font-black text-indigo-800 uppercase tracking-widest cursor-pointer flex-1">Manage all villages in Taluka</label>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 opacity-70">
-                    <Hash size={18} className="text-slate-400" />
-                    <input required readOnly placeholder={t('pincode')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800" value={formData.pincode || ''} />
+                  
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 opacity-80 shadow-sm">
+                    <Hash size={16} className="text-slate-400" />
+                    <input required readOnly placeholder="Pincode" className="bg-transparent outline-none text-xs w-full font-bold text-slate-800" value={formData.pincode || ''} />
                   </div>
                   
-                  <div className="flex items-start gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
-                    <Edit3 size={18} className="text-slate-400 mt-0.5" />
-                    <textarea rows={3} placeholder={t('physicalAddress')} className="bg-transparent outline-none text-sm w-full font-black text-slate-800 resize-none" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                  <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 focus-within:bg-white transition-all shadow-sm">
+                    <Edit3 size={18} className="text-amber-600 mt-0.5" />
+                    <textarea rows={3} placeholder="Physical Address" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 resize-none placeholder:font-medium placeholder:text-slate-400" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                   </div>
                 </div>
 
@@ -850,10 +897,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <button type="submit" className={`w-full py-5 rounded-2xl font-black text-white uppercase text-[11px] tracking-widest active:scale-95 transition-all shadow-lg ${role === 'admin' ? 'bg-slate-900' : 'bg-emerald-600'}`}>
-              {isLogin ? t('signInSecurely') : t('createAccount')}
+            <button type="submit" className={`relative z-10 w-full py-5 rounded-2xl font-black text-white uppercase text-[12px] tracking-widest active:scale-95 transition-all shadow-xl hover:shadow-2xl ${role === 'admin' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'}`}>
+              {isLogin ? 'Sign In Securely' : 'Create Account'}
             </button>
           </form>
+        </div>
         </div>
         
         <div className="flex justify-center pb-8">
