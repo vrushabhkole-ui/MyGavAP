@@ -282,7 +282,7 @@ async function startServer() {
   });
 
   // Catch-all for API 404s (Must be before frontend middleware)
-  app.all("/api/*", (req, res) => {
+  app.use("/api", (req, res) => {
     console.log(`404 API Request: ${req.method} ${req.originalUrl}`);
     res.status(404).json({ 
       error: "API endpoint not found", 
@@ -308,7 +308,7 @@ async function startServer() {
     const distPath = path.join(__dirname, "dist");
     if (fs.existsSync(distPath)) {
       app.use(express.static(distPath));
-      app.get("*", (_req, res) => {
+      app.use((_req, res) => {
         const indexPath = path.join(distPath, "index.html");
         if (fs.existsSync(indexPath)) {
           res.sendFile(indexPath);
@@ -318,7 +318,7 @@ async function startServer() {
       });
     } else {
       console.error("Dist folder not found at:", distPath);
-      app.get("*", (_req, res) => {
+      app.use((_req, res) => {
         res.status(500).send("Server Error: Dist folder missing. Please run build.");
       });
     }
