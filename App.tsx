@@ -27,6 +27,8 @@ import {
 } from './types.ts';
 import { DICTIONARY, SERVICES } from './constants.tsx';
 
+import { getApiUrl, getSocketUrl } from './utils/api';
+
 const ONBOARDING_KEY = 'mygaav_onboarding_completed';
 
 const App: React.FC = () => {
@@ -60,7 +62,7 @@ const App: React.FC = () => {
     lastSyncedData.current[path] = dataString;
 
     try {
-      const response = await fetch(`/api/${path}`, {
+      const response = await fetch(getApiUrl(`/api/${path}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: dataString
@@ -96,7 +98,7 @@ const App: React.FC = () => {
 
   const loadResidentsFromServer = async () => {
     try {
-      const response = await fetch('/api/accounts');
+      const response = await fetch(getApiUrl('/api/accounts'));
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         setResidents(allUsers.filter(u => u.role === 'user'));
@@ -107,7 +109,8 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const socket = io({
+    const socket = io(getSocketUrl(), {
+      path: '/socket.io',
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5
     });
@@ -135,7 +138,7 @@ const App: React.FC = () => {
 
     const loadFromServer = async (path: string, setter: Function) => {
       try {
-        const response = await fetch(`/api/${path}`);
+        const response = await fetch(getApiUrl(`/api/${path}`));
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) setter(data);
@@ -272,7 +275,7 @@ const App: React.FC = () => {
   const handleUpdateResidents = async (updatedResidents: UserProfile[]) => {
     setResidents(updatedResidents);
     try {
-      const response = await fetch('/api/accounts');
+      const response = await fetch(getApiUrl('/api/accounts'));
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
         const newAllUsers = allUsers.map(u => {

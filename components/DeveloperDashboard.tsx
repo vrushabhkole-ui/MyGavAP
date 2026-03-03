@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, StoredAccount } from '../types.ts';
 import { CheckCircle2, XCircle, Loader2, ShieldAlert, LogOut, Search, MapPin, Phone, Mail, RefreshCcw } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { getApiUrl, getSocketUrl } from '../utils/api';
 
 interface DeveloperDashboardProps {
   user: UserProfile;
@@ -16,7 +17,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/accounts');
+      const res = await fetch(getApiUrl('/api/accounts'));
       if (res.ok) {
         const serverData = await res.json();
         setAccounts(serverData);
@@ -29,7 +30,8 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   };
 
   useEffect(() => {
-    const socket = io({
+    const socket = io(getSocketUrl(), {
+      path: '/socket.io',
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5
     });
@@ -57,7 +59,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
     setAccounts(updatedAccounts as StoredAccount[]);
 
     try {
-      await fetch('/api/accounts', {
+      await fetch(getApiUrl('/api/accounts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedAccounts)
