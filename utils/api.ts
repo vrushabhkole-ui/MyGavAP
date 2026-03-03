@@ -1,9 +1,7 @@
 export const getApiUrl = (path: string) => {
-  const origin = window.location.origin;
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${origin}${cleanPath}`;
+  return path.startsWith('/') ? path : `/${path}`;
 };
 
 export const getSocketUrl = () => {
-  return window.location.origin;
+  return undefined;
 };
