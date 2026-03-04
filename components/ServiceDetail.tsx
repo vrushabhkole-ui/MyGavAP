@@ -381,4 +381,4 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ lang, service, bills, onB
   );
 };
 
-export default ServiceDetail;
+export default React.memo(ServiceDetail);

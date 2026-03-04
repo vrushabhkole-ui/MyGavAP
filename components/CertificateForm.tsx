@@ -133,4 +133,4 @@ const CertificateForm: React.FC<CertificateFormProps> = ({ lang, onBack, onSubmi
   );
 };
 
-export default CertificateForm;
+export default React.memo(CertificateForm);

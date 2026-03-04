@@ -306,4 +306,4 @@ const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ lang, businesses,
   );
 };
 
-export default BusinessDirectory;
+export default React.memo(BusinessDirectory);

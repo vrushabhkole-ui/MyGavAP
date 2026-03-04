@@ -37,7 +37,7 @@ const ProcessRequestModal: React.FC<{
   lang: Language;
   onClose: () => void;
   onUpdate: (id: string, status: RequestStatus, report: string, adminDoc?: FileMetadata) => void;
-}> = ({ request, lang, onClose, onUpdate }) => {
+}> = React.memo(({ request, lang, onClose, onUpdate }) => {
   const [status, setStatus] = useState<RequestStatus>(request.status);
   const [report, setReport] = useState(request.adminReport || '');
   const [file, setFile] = useState<FileMetadata | null>(request.adminDocument || null);
@@ -181,9 +181,9 @@ const ProcessRequestModal: React.FC<{
       </div>
     </div>
   );
-};
+});
 
-const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void }> = ({ resident, onClose }) => {
+const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void }> = React.memo(({ resident, onClose }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className="relative w-full max-w-sm bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
@@ -269,7 +269,7 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
       </div>
     </div>
   );
-};
+});
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   lang, user, requests, residents, bills, notices, transactions, businesses, notifications, onOpenNotifications, onUpdateBusinesses,
@@ -1011,4 +1011,4 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 };
 
-export default AdminDashboard;
+export default React.memo(AdminDashboard);

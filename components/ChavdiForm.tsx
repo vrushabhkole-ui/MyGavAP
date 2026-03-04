@@ -165,4 +165,4 @@ const ChavdiForm: React.FC<ChavdiFormProps> = ({ lang, portalIdx, onBack, onSubm
   );
 };
 
-export default ChavdiForm;
+export default React.memo(ChavdiForm);

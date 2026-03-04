@@ -278,6 +278,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     };
     
     try {
+      const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+      const existingIdx = localAccounts.findIndex((a: any) => a.email && profile.email && a.email.toLowerCase() === profile.email.toLowerCase());
+      if (existingIdx >= 0) {
+        localAccounts[existingIdx] = stored;
+      } else {
+        localAccounts.push(stored);
+      }
+      localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(localAccounts));
+    } catch (e) {
+      console.error('Failed to save to local storage', e);
+    }
+    
+    try {
       // Check connectivity first
       try {
         const ping = await fetch(getApiUrl(`/api/ping?t=${Date.now()}`));
@@ -346,38 +359,68 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
     if (isLogin) {
       try {
-      const loginUrl = getApiUrl(`/api/auth/login?t=${Date.now()}`);
-      console.log('Attempting login at:', loginUrl);
-      const response = await fetch(loginUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: emailKey,
-          password: formData.password,
-          role,
-          department: formData.department
-        })
-      });
+        const loginUrl = getApiUrl(`/api/auth/login?t=${Date.now()}`);
+        console.log('Attempting login at:', loginUrl);
+        const response = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: emailKey,
+            password: formData.password,
+            role,
+            department: formData.department
+          })
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        onLogin(data.account);
-      } else {
-        const text = await response.text();
-        try {
-          const data = JSON.parse(text);
-          setError(data.error || 'Invalid credentials.');
-        } catch (e) {
-          console.error('Failed to parse error response:', text);
-          setError(`Login failed (${response.status}). Please try again.`);
+        if (response.ok) {
+          const data = await response.json();
+          onLogin(data.account);
+        } else {
+          // Fallback to local storage
+          const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+          const localUser = localAccounts.find((a: any) => 
+            a.email && a.email.toLowerCase() === emailKey && 
+            a.password === formData.password &&
+            a.role === role
+          );
+          
+          if (localUser) {
+            // Re-sync to server in background
+            fetch(getApiUrl(`/api/auth/register?t=${Date.now()}`), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(localUser)
+            }).catch(e => console.error('Background sync failed', e));
+            
+            onLogin(localUser);
+          } else {
+            const text = await response.text();
+            try {
+              const data = JSON.parse(text);
+              setError(data.error || 'Invalid credentials.');
+            } catch (e) {
+              console.error('Failed to parse error response:', text);
+              setError(`Login failed (${response.status}). Please try again.`);
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback to local storage on network error
+        const localAccounts = JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || '[]');
+        const localUser = localAccounts.find((a: any) => 
+          a.email && a.email.toLowerCase() === emailKey && 
+          a.password === formData.password &&
+          a.role === role
+        );
+        if (localUser) {
+          onLogin(localUser);
+        } else {
+          console.error('Login error', e);
+          setError('Connection error. Please check your internet.');
         }
       }
-    } catch (e) {
-      console.error('Login error', e);
-      setError('Connection error. Please check your internet.');
+      return;
     }
-    return;
-  }
 
     // Registration flow
     // Re-fetch accounts to ensure we have the latest for validation
@@ -416,19 +459,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       role,
       department: role === 'admin' ? formData.department : undefined,
       joinedAt: new Date().toLocaleString('en-IN'),
-      status: role === 'user' ? 'pending' : 'approved',
+      status: 'approved',
       assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined
     };
     
     const registeredAccount = await saveToRegistry(profile, formData.password);
     if (registeredAccount) {
-      if (role === 'user') {
-        setIsLogin(true);
-        setError('');
-        alert('Account created successfully! Your request has been sent to the village admin. You will be able to login once approved.');
-      } else {
-        onLogin(registeredAccount);
-      }
+      onLogin(registeredAccount);
     }
   };
 
@@ -566,30 +603,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
-            {isLogin && savedAccounts.length > 0 && (
-              <div className="pb-4 border-b border-slate-50">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2 block">Registered Accounts ({savedAccounts.length})</label>
-                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-                  {savedAccounts.slice(0, 5).map(acc => (
-                    <button
-                      key={acc.id}
-                      type="button"
-                      onClick={() => {
-                        setFormData({ ...formData, email: acc.email });
-                        setRole(acc.role as UserRole);
-                        if (acc.department) setFormData(prev => ({ ...prev, department: acc.department as ServiceType }));
-                      }}
-                      className="flex flex-col items-center gap-1 shrink-0 group"
-                    >
-                      <div className={`w-10 h-10 rounded-full ${acc.avatarColor || 'bg-slate-200'} flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform`}>
-                        {acc.name.charAt(0)}
-                      </div>
-                      <span className="text-[8px] font-bold text-slate-500 max-w-[50px] truncate">{acc.name.split(' ')[0]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
             {isLogin ? (
               <div className="space-y-5">
                 <div className="space-y-1.5">
@@ -930,4 +943,4 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   );
 };
 
-export default Auth;
+export default React.memo(Auth);

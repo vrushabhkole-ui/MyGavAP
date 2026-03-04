@@ -21,7 +21,7 @@ interface RequestItemProps {
   getStatusStyle: (status: RequestStatus) => string;
 }
 
-const RequestItem: React.FC<RequestItemProps> = ({ 
+const RequestItem: React.FC<RequestItemProps> = React.memo(({ 
   req, 
   isExpanded, 
   onToggle, 
@@ -89,7 +89,7 @@ const RequestItem: React.FC<RequestItemProps> = ({
       )}
     </div>
   );
-};
+});
 
 interface ServiceRequestsViewProps {
   lang: Language;
@@ -209,4 +209,4 @@ const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({ lang, request
   );
 };
 
-export default ServiceRequestsView;
+export default React.memo(ServiceRequestsView);

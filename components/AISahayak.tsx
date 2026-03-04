@@ -146,4 +146,4 @@ const AISahayak: React.FC<AISahayakProps> = ({ lang }) => {
   );
 };
 
-export default AISahayak;
+export default React.memo(AISahayak);

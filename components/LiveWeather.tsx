@@ -306,4 +306,4 @@ const LiveWeather: React.FC<LiveWeatherProps> = ({ village, lang, isExpanded, on
   );
 };
 
-export default LiveWeather;
+export default React.memo(LiveWeather);

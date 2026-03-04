@@ -109,4 +109,4 @@ const HealthForm: React.FC<HealthFormProps> = ({ lang, portalIdx, onBack, onSubm
   );
 };
 
-export default HealthForm;
+export default React.memo(HealthForm);

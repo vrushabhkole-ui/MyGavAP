@@ -138,4 +138,4 @@ const NOCForm: React.FC<NOCFormProps> = ({ lang, onBack, onSubmit }) => {
   );
 };
 
-export default NOCForm;
+export default React.memo(NOCForm);

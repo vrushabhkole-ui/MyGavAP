@@ -1,25 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import { Home, Bot, Grid, User, Info, Loader2 } from 'lucide-react';
 import Dashboard from './components/Dashboard.tsx';
-import AISahayak from './components/AISahayak.tsx';
 import Auth from './Auth.tsx';
-import ServiceRequestsView from './components/ServiceRequestsView.tsx';
-import AdminDashboard from './components/AdminDashboard.tsx';
-import DeveloperDashboard from './components/DeveloperDashboard.tsx';
-import ServiceDetail from './components/ServiceDetail.tsx';
-import NotificationCenter from './components/NotificationCenter.tsx';
-import CertificateForm from './components/CertificateForm.tsx';
-import NOCForm from './components/NOCForm.tsx';
-import ChavdiForm from './components/ChavdiForm.tsx';
-import ElectricityForm from './components/ElectricityForm.tsx';
-import GasForm from './components/GasForm.tsx';
-import HealthForm from './components/HealthForm.tsx';
-import NeedHelpForm from './components/NeedHelpForm.tsx';
-import BusinessDirectory from './components/BusinessDirectory.tsx';
-import OnboardingTour from './components/OnboardingTour.tsx';
-import AboutView from './components/AboutView.tsx';
 import MaharashtraEmblem from './components/MaharashtraEmblem.tsx';
 import { 
   UserProfile, Language, ServiceType, ServiceRequest, 
@@ -28,6 +12,23 @@ import {
 import { DICTIONARY, SERVICES } from './constants.tsx';
 
 import { getApiUrl, getSocketUrl } from './utils/api';
+
+const AISahayak = lazy(() => import('./components/AISahayak.tsx'));
+const ServiceRequestsView = lazy(() => import('./components/ServiceRequestsView.tsx'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard.tsx'));
+const DeveloperDashboard = lazy(() => import('./components/DeveloperDashboard.tsx'));
+const ServiceDetail = lazy(() => import('./components/ServiceDetail.tsx'));
+const NotificationCenter = lazy(() => import('./components/NotificationCenter.tsx'));
+const CertificateForm = lazy(() => import('./components/CertificateForm.tsx'));
+const NOCForm = lazy(() => import('./components/NOCForm.tsx'));
+const ChavdiForm = lazy(() => import('./components/ChavdiForm.tsx'));
+const ElectricityForm = lazy(() => import('./components/ElectricityForm.tsx'));
+const GasForm = lazy(() => import('./components/GasForm.tsx'));
+const HealthForm = lazy(() => import('./components/HealthForm.tsx'));
+const NeedHelpForm = lazy(() => import('./components/NeedHelpForm.tsx'));
+const BusinessDirectory = lazy(() => import('./components/BusinessDirectory.tsx'));
+const OnboardingTour = lazy(() => import('./components/OnboardingTour.tsx'));
+const AboutView = lazy(() => import('./components/AboutView.tsx'));
 
 const ONBOARDING_KEY = 'mygaav_onboarding_completed';
 
@@ -314,20 +315,56 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSelectService = useCallback((id: ServiceType) => {
+    setActiveServiceId(id);
+    setCurrentView('service-detail');
+  }, []);
+
+  const handleOpenNotifications = useCallback(() => {
+    setCurrentView('notifications');
+  }, []);
+
+  const handleAddVillage = useCallback((v: string) => {
+    setSelectedVillages(prev => {
+      if (!prev.includes(v)) {
+        return [...prev, v];
+      }
+      return prev;
+    });
+  }, []);
+
+  const handleRemoveVillage = useCallback((v: string) => {
+    setSelectedVillages(prev => prev.filter(sv => sv !== v));
+  }, []);
+
   const t = (key: string) => DICTIONARY[key]?.[language] || key;
 
+  const activeService = useMemo(() => SERVICES.find(s => s.id === activeServiceId), [activeServiceId]);
+  
+  const userNotices = useMemo(() => {
+    if (!user) return [];
+    return notices.filter(n => 
+      n.state === user.state &&
+      n.district === user.district &&
+      n.village === user.village && 
+      n.subDistrict === user.subDistrict &&
+      n.pincode === user.pincode
+    );
+  }, [notices, user]);
+
+  const userNotifications = useMemo(() => {
+    if (!user) return [];
+    return notifications.filter(n => !n.userId || n.userId === user.id);
+  }, [notifications, user]);
+  
+  const userBills = useMemo(() => {
+    if (!user) return [];
+    return bills.filter(b => b.userId === user.id);
+  }, [bills, user]);
+  
+  const hasUnreadNotifications = useMemo(() => userNotifications.some(n => !n.read), [userNotifications]);
+
   if (!user) return <Auth onLogin={handleLogin} />;
-
-  const activeService = SERVICES.find(s => s.id === activeServiceId);
-  const userNotices = notices.filter(n => 
-    n.state === user.state &&
-    n.district === user.district &&
-    n.village === user.village && 
-    n.subDistrict === user.subDistrict &&
-    n.pincode === user.pincode
-  );
-
-  const userNotifications = notifications.filter(n => !n.userId || n.userId === user.id);
 
   return (
     <div className="max-w-md mx-auto bg-slate-50 h-[100dvh] relative shadow-2xl overflow-hidden flex flex-col">
@@ -342,113 +379,113 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'notifications' ? (
-          <NotificationCenter 
-            notifications={userNotifications} 
-            onBack={() => setCurrentView(user.role === 'admin' ? 'admin' : 'dashboard')} 
-            onClearAll={() => {
-              setNotifications(prev => {
-                const updated = prev.filter(n => n.userId && n.userId !== user.id);
-                syncToServer('notifications', updated);
-                return updated;
-              });
-            }} 
-            onMarkRead={(id) => {
-              setNotifications(prev => {
-                const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-                syncToServer('notifications', updated);
-                return updated;
-              });
-            }} 
-          />
-        ) : user.role === 'developer' ? (
-          <DeveloperDashboard user={user} onLogout={handleLogout} />
-        ) : user.role === 'admin' ? (
-          <AdminDashboard 
-            lang={language} 
-            user={user} 
-            requests={requests} 
-            residents={residents} 
-            bills={bills} 
-            notices={notices}
-            transactions={transactions}
-            businesses={businesses}
-            notifications={userNotifications}
-            onOpenNotifications={() => setCurrentView('notifications')}
-            onUpdateBusinesses={handleUpdateBusinesses}
-            onUpdateResidents={handleUpdateResidents}
-            onUpdateStatus={updateRequestStatus} 
-            onIssueBill={(b) => {
-              setBills(prev => {
-                const updated = [{ ...b }, ...prev];
-                syncToServer('bills', updated);
-                return updated;
-              });
-            }} 
-            onMarkBillPaid={(id) => {
-              setBills(prev => {
-                const updated = prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b);
-                syncToServer('bills', updated);
-                return updated;
-              });
-              const bill = bills.find(b => b.id === id);
-              if (bill) {
-                const newTx: Transaction = {
-                  id: `TX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-                  billId: bill.id,
-                  userId: bill.userId,
-                  userName: residents.find(r => r.id === bill.userId)?.name || 'Resident',
-                  state: bill.state,
-                  district: bill.district,
-                  village: bill.village,
-                  subDistrict: bill.subDistrict,
-                  pincode: bill.pincode,
-                  type: bill.type,
-                  amount: bill.amount,
-                  recipient: user.name, // Admin name
-                  vpa: 'CASH-PAYMENT',
-                  timestamp: new Date().toLocaleString(),
-                  status: 'Success',
-                  referenceId: `CASH-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
-                };
-                setTransactions(prev => {
-                  const updated = [newTx, ...prev];
-                  syncToServer('transactions', updated);
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>}>
+            <NotificationCenter 
+              notifications={userNotifications} 
+              onBack={() => setCurrentView(user.role === 'admin' ? 'admin' : 'dashboard')} 
+              onClearAll={() => {
+                setNotifications(prev => {
+                  const updated = prev.filter(n => n.userId && n.userId !== user.id);
+                  syncToServer('notifications', updated);
                   return updated;
                 });
-              }
-            }}
-            onDeleteBill={(id) => {
-              setBills(prev => {
-                const updated = prev.filter(b => b.id !== id);
-                syncToServer('bills', updated);
-                return updated;
-              });
-            }}
-            onIssueNotice={handleIssueNotice} 
-            onDeleteNotice={handleDeleteNotice}
-            onLogout={handleLogout}
-          />
+              }} 
+              onMarkRead={(id) => {
+                setNotifications(prev => {
+                  const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+                  syncToServer('notifications', updated);
+                  return updated;
+                });
+              }} 
+            />
+          </Suspense>
+        ) : user.role === 'developer' ? (
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>}>
+            <DeveloperDashboard user={user} onLogout={handleLogout} />
+          </Suspense>
+        ) : user.role === 'admin' ? (
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>}>
+            <AdminDashboard 
+              lang={language} 
+              user={user} 
+              requests={requests} 
+              residents={residents} 
+              bills={bills} 
+              notices={notices}
+              transactions={transactions}
+              businesses={businesses}
+              notifications={userNotifications}
+              onOpenNotifications={() => setCurrentView('notifications')}
+              onUpdateBusinesses={handleUpdateBusinesses}
+              onUpdateResidents={handleUpdateResidents}
+              onUpdateStatus={updateRequestStatus} 
+              onIssueBill={(b) => {
+                setBills(prev => {
+                  const updated = [{ ...b }, ...prev];
+                  syncToServer('bills', updated);
+                  return updated;
+                });
+              }} 
+              onMarkBillPaid={(id) => {
+                setBills(prev => {
+                  const updated = prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b);
+                  syncToServer('bills', updated);
+                  return updated;
+                });
+                const bill = bills.find(b => b.id === id);
+                if (bill) {
+                  const newTx: Transaction = {
+                    id: `TX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                    billId: bill.id,
+                    userId: bill.userId,
+                    userName: residents.find(r => r.id === bill.userId)?.name || 'Resident',
+                    state: bill.state,
+                    district: bill.district,
+                    village: bill.village,
+                    subDistrict: bill.subDistrict,
+                    pincode: bill.pincode,
+                    type: bill.type,
+                    amount: bill.amount,
+                    recipient: user.name, // Admin name
+                    vpa: 'CASH-PAYMENT',
+                    timestamp: new Date().toLocaleString(),
+                    status: 'Success',
+                    referenceId: `CASH-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+                  };
+                  setTransactions(prev => {
+                    const updated = [newTx, ...prev];
+                    syncToServer('transactions', updated);
+                    return updated;
+                  });
+                }
+              }}
+              onDeleteBill={(id) => {
+                setBills(prev => {
+                  const updated = prev.filter(b => b.id !== id);
+                  syncToServer('bills', updated);
+                  return updated;
+                });
+              }}
+              onIssueNotice={handleIssueNotice} 
+              onDeleteNotice={handleDeleteNotice}
+              onLogout={handleLogout}
+            />
+          </Suspense>
         ) : (
-          <>
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>}>
             {currentView === 'dashboard' && (
               <Dashboard 
                 lang={language} 
                 user={user} 
-                bills={bills.filter(b => b.userId === user.id)} 
+                bills={userBills} 
                 notices={userNotices} 
                 selectedVillages={selectedVillages}
                 onSetLang={setLanguage} 
-                onSelectService={(id) => { setActiveServiceId(id); setCurrentView('service-detail'); }} 
-                onOpenNotifications={() => setCurrentView('notifications')} 
-                onAddVillage={(v) => {
-                  if (!selectedVillages.includes(v)) {
-                    setSelectedVillages([...selectedVillages, v]);
-                  }
-                }}
-                onRemoveVillage={(v) => {
-                  setSelectedVillages(selectedVillages.filter(sv => sv !== v));
-                }}
-                hasUnread={userNotifications.some(n => !n.read)} 
+                onSelectService={handleSelectService} 
+                onOpenNotifications={handleOpenNotifications} 
+                onAddVillage={handleAddVillage}
+                onRemoveVillage={handleRemoveVillage}
+                hasUnread={hasUnreadNotifications} 
               />
             )}
 
@@ -566,7 +603,7 @@ const App: React.FC = () => {
                 </div>
               </div>
             )}
-          </>
+          </Suspense>
         )}
       </main>
 
@@ -595,7 +632,11 @@ const App: React.FC = () => {
         </nav>
       )}
 
-      {showOnboarding && <OnboardingTour lang={language} onComplete={handleOnboardingComplete} />}
+      {showOnboarding && (
+        <Suspense fallback={null}>
+          <OnboardingTour lang={language} onComplete={handleOnboardingComplete} />
+        </Suspense>
+      )}
     </div>
   );
 };

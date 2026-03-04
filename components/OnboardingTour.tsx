@@ -135,4 +135,4 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ lang, onComplete }) => 
   );
 };
 
-export default OnboardingTour;
+export default React.memo(OnboardingTour);

@@ -143,4 +143,4 @@ const GasForm: React.FC<GasFormProps> = ({ lang, onBack, onSubmit }) => {
   );
 };
 
-export default GasForm;
+export default React.memo(GasForm);

@@ -75,4 +75,4 @@ const NeedHelpForm: React.FC<NeedHelpFormProps> = ({ lang, service, onBack, onSu
   );
 };
 
-export default NeedHelpForm;
+export default React.memo(NeedHelpForm);

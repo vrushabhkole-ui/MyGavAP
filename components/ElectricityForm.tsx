@@ -75,4 +75,4 @@ const ElectricityForm: React.FC<ElectricityFormProps> = ({ lang, onBack, onSubmi
   );
 };
 
-export default ElectricityForm;
+export default React.memo(ElectricityForm);

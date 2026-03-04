@@ -186,4 +186,4 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ user, onLogout 
   );
 };
 
-export default DeveloperDashboard;
+export default React.memo(DeveloperDashboard);

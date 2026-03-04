@@ -75,4 +75,4 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifications, 
   );
 };
 
-export default NotificationCenter;
+export default React.memo(NotificationCenter);

@@ -136,4 +136,4 @@ const AboutView: React.FC<AboutViewProps> = ({ lang }) => {
   );
 };
 
-export default AboutView;
+export default React.memo(AboutView);
