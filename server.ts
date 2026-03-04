@@ -170,6 +170,27 @@ async function startServer() {
       io.emit(`data-update-${route.path}`, req.body);
       res.json({ success: true });
     });
+
+    app.post([`/api/${route.path}/sync`, `/api/${route.path}/sync/`], (req, res) => {
+      const { action, item } = req.body;
+      let currentData = readData(route.file);
+      if (!Array.isArray(currentData)) currentData = [];
+      
+      if (action === 'add' || action === 'update') {
+        const exists = currentData.findIndex((x: any) => x.id === item.id);
+        if (exists >= 0) {
+          currentData[exists] = { ...currentData[exists], ...item };
+        } else {
+          currentData.unshift(item);
+        }
+      } else if (action === 'delete') {
+        currentData = currentData.filter((x: any) => x.id !== item.id);
+      }
+      
+      saveData(route.file, currentData);
+      io.emit(`data-update-${route.path}`, currentData);
+      res.json({ success: true, data: currentData });
+    });
   });
 
   app.get(["/api/officer-keys", "/api/officer-keys/"], (req, res) => {

@@ -55,23 +55,16 @@ const App: React.FC = () => {
   const lastSyncedData = React.useRef<Record<string, string>>({});
 
   // Persistence Helpers
-  const syncToServer = async (path: string, data: any) => {
-    const dataString = JSON.stringify(data);
-    if (lastSyncedData.current[path] === dataString) {
-      return; // Skip if data hasn't actually changed
-    }
-    lastSyncedData.current[path] = dataString;
-
+  const syncItemToServer = async (path: string, action: 'add' | 'update' | 'delete', item: any) => {
     try {
-      const response = await fetch(getApiUrl(`/api/${path}`), {
+      const response = await fetch(getApiUrl(`/api/${path}/sync`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: dataString
+        body: JSON.stringify({ action, item })
       });
       if (!response.ok) throw new Error('Server error');
     } catch (e) {
-      console.warn(`Failed to sync ${path} to server, falling back to local storage`);
-      localStorage.setItem(`MYGAAV_DATA_${path.toUpperCase()}`, dataString);
+      console.warn(`Failed to sync ${path} to server`);
     }
   };
 
@@ -195,11 +188,8 @@ const App: React.FC = () => {
 
   const addNotification = (title: string, message: string, type: 'info' | 'success' | 'alert', userId?: string) => {
     const n: AppNotification = { id: Math.random().toString(36).substr(2, 9), userId, title, message, type, time: 'Just now', read: false };
-    setNotifications(prev => {
-      const updated = [n, ...prev];
-      syncToServer('notifications', updated);
-      return updated;
-    });
+    setNotifications(prev => [n, ...prev]);
+    syncItemToServer('notifications', 'add', n);
   };
 
   const handleNewRequest = (serviceId: ServiceType, description: string, userDoc?: FileMetadata) => {
@@ -223,11 +213,8 @@ const App: React.FC = () => {
       assignedAdminId: user.assignedAdminId
     };
     
-    setRequests(prev => {
-      const updated = [newReq, ...prev];
-      syncToServer('requests', updated);
-      return updated;
-    });
+    setRequests(prev => [newReq, ...prev]);
+    syncItemToServer('requests', 'add', newReq);
     
     setCurrentView('requests');
     addNotification('Request Submitted', `Your ticket for ${newReq.serviceTitle} has been received.`, 'success', user.id);
@@ -238,28 +225,19 @@ const App: React.FC = () => {
 
   const handleIssueNotice = (notice: VillageNotice) => {
     if (!user) return;
-    setNotices(prev => {
-      const updated = [notice, ...prev];
-      syncToServer('notices', updated);
-      return updated;
-    });
+    setNotices(prev => [notice, ...prev]);
+    syncItemToServer('notices', 'add', notice);
     addNotification('New Announcement', `Notice: ${notice.title} published.`, 'info');
   };
 
   const handleDeleteNotice = (id: string) => {
-    setNotices(prev => {
-      const updated = prev.filter(n => n.id !== id);
-      syncToServer('notices', updated);
-      return updated;
-    });
+    setNotices(prev => prev.filter(n => n.id !== id));
+    syncItemToServer('notices', 'delete', { id });
   };
 
   const updateRequestStatus = (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => {
-    setRequests(prev => {
-      const updated = prev.map(r => r.id === id ? { ...r, status, adminReport: report, adminDocument: adminDoc } : r);
-      syncToServer('requests', updated);
-      return updated;
-    });
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status, adminReport: report, adminDocument: adminDoc } : r));
+    syncItemToServer('requests', 'update', { id, status, adminReport: report, adminDocument: adminDoc });
     
     const req = requests.find(r => r.id === id);
     if (req) {
@@ -267,29 +245,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateBusinesses = (biz: LocalBusiness[]) => {
-    setBusinesses(biz);
-    syncToServer('businesses', biz);
+  const handleUpdateBusiness = (biz: LocalBusiness) => {
+    setBusinesses(prev => prev.map(b => b.id === biz.id ? biz : b));
+    syncItemToServer('businesses', 'update', biz);
     addNotification('Directory Updated', 'Local business registry has been updated.', 'info');
   };
 
-  const handleUpdateResidents = async (updatedResidents: UserProfile[]) => {
-    console.log("Updating residents:", updatedResidents);
-    setResidents(updatedResidents);
-    try {
-      const response = await fetch(getApiUrl('/api/accounts'), { cache: 'no-store' });
-      if (response.ok) {
-        const allUsers = await response.json() as UserProfile[];
-        const newAllUsers = allUsers.map(u => {
-          const found = updatedResidents.find(r => r.id === u.id);
-          return found ? { ...u, ...found } : u;
-        });
-        console.log("New all users:", newAllUsers);
-        await syncToServer('accounts', newAllUsers);
-      }
-    } catch (e) {
-      console.error("Failed to update residents on server", e);
-    }
+  const handleUpdateResident = async (updatedResident: UserProfile) => {
+    console.log("Updating resident:", updatedResident);
+    setResidents(prev => prev.map(r => r.id === updatedResident.id ? updatedResident : r));
+    await syncItemToServer('accounts', 'update', updatedResident);
   };
 
   const handleRegisterBusiness = (biz: Omit<LocalBusiness, 'id' | 'village' | 'subDistrict' | 'status'>) => {
@@ -304,11 +269,8 @@ const App: React.FC = () => {
       pincode: user.pincode,
       status: 'Pending'
     };
-    setBusinesses(prev => {
-      const updated = [...prev, newBiz];
-      syncToServer('businesses', updated);
-      return updated;
-    });
+    setBusinesses(prev => [...prev, newBiz]);
+    syncItemToServer('businesses', 'add', newBiz);
     addNotification('Listing Received', `${newBiz.name} registration is pending officer approval.`, 'info', user.id);
     if (user.assignedAdminId) {
       addNotification('New Business', `${user.name} registered ${newBiz.name}.`, 'info', user.assignedAdminId);
@@ -384,18 +346,16 @@ const App: React.FC = () => {
               notifications={userNotifications} 
               onBack={() => setCurrentView(user.role === 'admin' ? 'admin' : 'dashboard')} 
               onClearAll={() => {
-                setNotifications(prev => {
-                  const updated = prev.filter(n => n.userId && n.userId !== user.id);
-                  syncToServer('notifications', updated);
-                  return updated;
+                userNotifications.forEach(n => {
+                  if (n.userId === user.id) {
+                    syncItemToServer('notifications', 'delete', { id: n.id });
+                  }
                 });
+                setNotifications(prev => prev.filter(n => n.userId && n.userId !== user.id));
               }} 
               onMarkRead={(id) => {
-                setNotifications(prev => {
-                  const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-                  syncToServer('notifications', updated);
-                  return updated;
-                });
+                setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+                syncItemToServer('notifications', 'update', { id, read: true });
               }} 
             />
           </Suspense>
@@ -416,22 +376,16 @@ const App: React.FC = () => {
               businesses={businesses}
               notifications={userNotifications}
               onOpenNotifications={() => setCurrentView('notifications')}
-              onUpdateBusinesses={handleUpdateBusinesses}
-              onUpdateResidents={handleUpdateResidents}
+              onUpdateBusiness={handleUpdateBusiness}
+              onUpdateResident={handleUpdateResident}
               onUpdateStatus={updateRequestStatus} 
               onIssueBill={(b) => {
-                setBills(prev => {
-                  const updated = [{ ...b }, ...prev];
-                  syncToServer('bills', updated);
-                  return updated;
-                });
+                setBills(prev => [{ ...b }, ...prev]);
+                syncItemToServer('bills', 'add', b);
               }} 
               onMarkBillPaid={(id) => {
-                setBills(prev => {
-                  const updated = prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b);
-                  syncToServer('bills', updated);
-                  return updated;
-                });
+                setBills(prev => prev.map(b => b.id === id ? { ...b, status: 'Paid' } : b));
+                syncItemToServer('bills', 'update', { id, status: 'Paid' });
                 const bill = bills.find(b => b.id === id);
                 if (bill) {
                   const newTx: Transaction = {
@@ -452,19 +406,13 @@ const App: React.FC = () => {
                     status: 'Success',
                     referenceId: `CASH-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
                   };
-                  setTransactions(prev => {
-                    const updated = [newTx, ...prev];
-                    syncToServer('transactions', updated);
-                    return updated;
-                  });
+                  setTransactions(prev => [newTx, ...prev]);
+                  syncItemToServer('transactions', 'add', newTx);
                 }
               }}
               onDeleteBill={(id) => {
-                setBills(prev => {
-                  const updated = prev.filter(b => b.id !== id);
-                  syncToServer('bills', updated);
-                  return updated;
-                });
+                setBills(prev => prev.filter(b => b.id !== id));
+                syncItemToServer('bills', 'delete', { id });
               }}
               onIssueNotice={handleIssueNotice} 
               onDeleteNotice={handleDeleteNotice}
