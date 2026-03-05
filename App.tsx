@@ -48,6 +48,7 @@ const App: React.FC = () => {
   const [notices, setNotices] = useState<VillageNotice[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [residents, setResidents] = useState<UserProfile[]>([]);
+  const [allAccounts, setAllAccounts] = useState<UserProfile[]>([]);
   const [businesses, setBusinesses] = useState<LocalBusiness[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedVillages, setSelectedVillages] = useState<string[]>([]);
@@ -90,15 +91,16 @@ const App: React.FC = () => {
     }
   }, [currentView, user]);
 
-  const loadResidentsFromServer = async () => {
+  const loadAccountsFromServer = async () => {
     try {
       const response = await fetch(getApiUrl('/api/accounts'), { cache: 'no-store' });
       if (response.ok) {
         const allUsers = await response.json() as UserProfile[];
+        setAllAccounts(allUsers);
         setResidents(allUsers.filter(u => u.role === 'user'));
       }
     } catch (e) {
-      console.error("Failed to load residents from server", e);
+      console.error("Failed to load accounts from server", e);
     }
   };
 
@@ -115,7 +117,10 @@ const App: React.FC = () => {
     socket.on('data-update-notices', (data) => { setNotices(data); });
     socket.on('data-update-notifications', (data) => { setNotifications(data); });
     socket.on('data-update-businesses', (data) => { setBusinesses(data); });
-    socket.on('data-update-accounts', (data) => { setResidents(data.filter((u: any) => u.role === 'user')); });
+    socket.on('data-update-accounts', (data) => { 
+      setAllAccounts(data);
+      setResidents(data.filter((u: any) => u.role === 'user')); 
+    });
 
     const session = localStorage.getItem('mygaav_active_session');
     if (session) {
@@ -144,7 +149,7 @@ const App: React.FC = () => {
 
     const loadAll = async () => {
       await Promise.all([
-        loadResidentsFromServer(),
+        loadAccountsFromServer(),
         loadFromServer('requests', setRequests),
         loadFromServer('transactions', setTransactions),
         loadFromServer('notifications', setNotifications),
@@ -165,7 +170,7 @@ const App: React.FC = () => {
   const handleLogin = (profile: UserProfile) => {
     setUser(profile);
     localStorage.setItem('mygaav_active_session', JSON.stringify(profile));
-    loadResidentsFromServer();
+    loadAccountsFromServer();
 
     if (profile.role === 'user') {
       const completed = localStorage.getItem(`${ONBOARDING_KEY}_${profile.id}`);
@@ -218,9 +223,17 @@ const App: React.FC = () => {
     
     setCurrentView('requests');
     addNotification('Request Submitted', `Your ticket for ${newReq.serviceTitle} has been received.`, 'success', user.id);
-    if (user.assignedAdminId) {
-      addNotification('New Request', `${user.name} submitted a request for ${newReq.serviceTitle}.`, 'info', user.assignedAdminId);
-    }
+    
+    // Notify all admins of the village
+    const villageAdmins = allAccounts.filter(a => 
+      a.role === 'admin' && 
+      (a.village === user.village || a.village === 'All') &&
+      a.subDistrict === user.subDistrict
+    );
+    
+    villageAdmins.forEach(admin => {
+      addNotification('New Request', `${user.name} submitted a request for ${newReq.serviceTitle}.`, 'info', admin.id);
+    });
   };
 
   const handleIssueNotice = (notice: VillageNotice) => {
@@ -254,6 +267,7 @@ const App: React.FC = () => {
   const handleUpdateResident = async (updatedResident: UserProfile) => {
     console.log("Updating resident:", updatedResident);
     setResidents(prev => prev.map(r => r.id === updatedResident.id ? updatedResident : r));
+    setAllAccounts(prev => prev.map(a => a.id === updatedResident.id ? updatedResident : a));
     await syncItemToServer('accounts', 'update', updatedResident);
   };
 
@@ -272,9 +286,17 @@ const App: React.FC = () => {
     setBusinesses(prev => [...prev, newBiz]);
     syncItemToServer('businesses', 'add', newBiz);
     addNotification('Listing Received', `${newBiz.name} registration is pending officer approval.`, 'info', user.id);
-    if (user.assignedAdminId) {
-      addNotification('New Business', `${user.name} registered ${newBiz.name}.`, 'info', user.assignedAdminId);
-    }
+    
+    // Notify all admins of the village
+    const villageAdmins = allAccounts.filter(a => 
+      a.role === 'admin' && 
+      (a.village === user.village || a.village === 'All') &&
+      a.subDistrict === user.subDistrict
+    );
+    
+    villageAdmins.forEach(admin => {
+      addNotification('New Business', `${user.name} registered ${newBiz.name}.`, 'info', admin.id);
+    });
   };
 
   const handleSelectService = useCallback((id: ServiceType) => {
@@ -298,6 +320,26 @@ const App: React.FC = () => {
   const handleRemoveVillage = useCallback((v: string) => {
     setSelectedVillages(prev => prev.filter(sv => sv !== v));
   }, []);
+
+  const adminData = useMemo(() => {
+    if (!user || user.role !== 'admin') return null;
+    
+    const filterByAdmin = (item: any) => {
+      if (user.village === 'All') {
+        return item.subDistrict === user.subDistrict && item.district === user.district;
+      }
+      return item.village === user.village && item.subDistrict === user.subDistrict;
+    };
+
+    return {
+      requests: requests.filter(filterByAdmin),
+      residents: residents.filter(filterByAdmin),
+      bills: bills.filter(filterByAdmin),
+      notices: notices.filter(filterByAdmin),
+      businesses: businesses.filter(filterByAdmin),
+      transactions: transactions.filter(filterByAdmin)
+    };
+  }, [user, requests, residents, bills, notices, businesses, transactions]);
 
   const t = (key: string) => DICTIONARY[key]?.[language] || key;
 
@@ -363,17 +405,17 @@ const App: React.FC = () => {
           <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>}>
             <DeveloperDashboard user={user} onLogout={handleLogout} />
           </Suspense>
-        ) : user.role === 'admin' ? (
+        ) : user.role === 'admin' && adminData ? (
           <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>}>
             <AdminDashboard 
               lang={language} 
               user={user} 
-              requests={requests} 
-              residents={residents} 
-              bills={bills} 
-              notices={notices}
-              transactions={transactions}
-              businesses={businesses}
+              requests={adminData.requests} 
+              residents={adminData.residents} 
+              bills={adminData.bills} 
+              notices={adminData.notices}
+              transactions={adminData.transactions}
+              businesses={adminData.businesses}
               notifications={userNotifications}
               onOpenNotifications={() => setCurrentView('notifications')}
               onUpdateBusiness={handleUpdateBusiness}
