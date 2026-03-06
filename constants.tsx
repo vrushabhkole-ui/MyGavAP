@@ -401,7 +401,9 @@ export const DICTIONARY: Record<string, Record<Language, string>> = {
   email: { en: 'Email', hi: 'ईमेल', mr: 'ईमेल' },
   residentId: { en: 'Resident ID', hi: 'निवासी आईडी', mr: 'निवासी आयडी' },
   memberSince: { en: 'Member Since', hi: 'सदस्यता की तिथि', mr: 'सदस्यता तारीख' },
-  digitalGaavPortal: { en: 'Digital Gaav Portal', hi: 'डिजिटल गांव पोर्टल', mr: 'डिजिटल गाव पोर्टल' }
+  digitalGaavPortal: { en: 'Digital Gaav Portal', hi: 'डिजिटल गांव पोर्टल', mr: 'डिजिटल गाव पोर्टल' },
+  villageAdmins: { en: 'Village Admins', hi: 'गांव के प्रशासक', mr: 'गावचे प्रशासक' },
+  active: { en: 'Active', hi: 'सक्रिय', mr: 'सक्रिय' }
 };
 
 export const SERVICES: ServiceInfo[] = [

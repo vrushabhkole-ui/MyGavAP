@@ -597,6 +597,37 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
           
           <div className="relative z-10">
+            {isLogin && savedAccounts.filter(a => a.role === role).length > 0 && (
+              <div className="mb-8 space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quick Login</h3>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{savedAccounts.filter(a => a.role === role).length} Saved</span>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x">
+                  {savedAccounts.filter(a => a.role === role).map((account) => (
+                    <button
+                      key={account.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          email: account.email || '',
+                          password: account.password || ''
+                        });
+                      }}
+                      className="flex-shrink-0 snap-center w-20 flex flex-col items-center gap-2 group"
+                    >
+                      <div className={`w-14 h-14 rounded-2xl ${account.avatarColor || 'bg-slate-200'} flex items-center justify-center text-white shadow-md group-hover:scale-110 group-active:scale-95 transition-all`}>
+                        <User size={24} />
+                      </div>
+                      <p className="text-[10px] font-black text-slate-600 text-center line-clamp-1 w-full px-1">{account.name.split(' ')[0]}</p>
+                    </button>
+                  ))}
+                </div>
+                <div className="h-px bg-slate-100 mx-2"></div>
+              </div>
+            )}
+
             <div className="flex bg-slate-50 p-1.5 rounded-2xl mb-8 border border-slate-100 shadow-inner">
               <button type="button" onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Login</button>
               <button type="button" onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${!isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Signup</button>

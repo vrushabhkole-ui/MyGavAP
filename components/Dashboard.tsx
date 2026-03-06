@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Sparkles, CreditCard, ChevronRight, Info, Megaphone, ExternalLink, MapPin, X, Calendar, BadgeCheck, Sun, Droplets, Wind, Thermometer, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { Bell, Sparkles, CreditCard, ChevronRight, Info, Megaphone, ExternalLink, MapPin, X, Calendar, BadgeCheck, Sun, Droplets, Wind, Thermometer, ChevronDown, ChevronUp, Plus, ShieldCheck, Phone } from 'lucide-react';
 import Logo from './Logo.tsx';
 import { SERVICES, getIcon, DICTIONARY } from '../constants.tsx';
 import { ServiceType, Language, UserProfile, Bill, VillageNotice } from '../types.ts';
@@ -12,6 +12,7 @@ interface DashboardProps {
   bills: Bill[];
   notices: VillageNotice[];
   selectedVillages: string[];
+  allAccounts: UserProfile[];
   onSetLang: (lang: Language) => void;
   onSelectService: (id: ServiceType) => void;
   onOpenNotifications: () => void;
@@ -67,7 +68,7 @@ const NoticeDetailModal: React.FC<{ notice: VillageNotice; onClose: () => void; 
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  lang, user, bills, notices, selectedVillages, 
+  lang, user, bills, notices, selectedVillages, allAccounts,
   onSetLang, onSelectService, onOpenNotifications, onAddVillage, onRemoveVillage, 
   hasUnread 
 }) => {
@@ -79,6 +80,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const t = (key: string) => DICTIONARY[key]?.[lang] || key;
   const unpaidBills = bills.filter(b => b.status === 'Unpaid' && b.type !== 'Electricity');
+
+  const villageAdmins = allAccounts.filter(a => 
+    a.role === 'admin' && 
+    (a.village === user.village || a.village === 'All') &&
+    a.subDistrict === user.subDistrict
+  );
 
   const handleAddVillage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,6 +246,30 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">₹{bill.amount.toLocaleString('en-IN')}</h3>
                   {bill.description && <p className="text-[10px] font-bold text-slate-400 mt-2 line-clamp-2 leading-relaxed italic">"{bill.description}"</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {villageAdmins.length > 0 && (
+          <div className="px-5 mt-8">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <h2 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">{t('villageAdmins')}</h2>
+              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">{villageAdmins.length} {t('active')}</span>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x">
+              {villageAdmins.map((admin) => (
+                <div key={admin.id} className="min-w-[200px] snap-center bg-white border border-slate-100 rounded-[28px] p-4 shadow-sm flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-2xl ${admin.avatarColor || 'bg-indigo-600'} flex items-center justify-center text-white shadow-md shrink-0`}>
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-800 truncate">{admin.name}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight truncate">
+                      {admin.department ? DICTIONARY[admin.department]?.[lang] || admin.department : 'Village Admin'}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>

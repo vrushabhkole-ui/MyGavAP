@@ -470,6 +470,7 @@ const App: React.FC = () => {
                 bills={userBills} 
                 notices={userNotices} 
                 selectedVillages={selectedVillages}
+                allAccounts={allAccounts}
                 onSetLang={setLanguage} 
                 onSelectService={handleSelectService} 
                 onOpenNotifications={handleOpenNotifications} 
