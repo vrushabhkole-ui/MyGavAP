@@ -108,7 +108,40 @@ const App: React.FC = () => {
     const socket = io(getSocketUrl(), {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    });
+
+    const loadFromServer = async (path: string, setter: Function) => {
+      try {
+        const response = await fetch(getApiUrl(`/api/${path}`), { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data && Array.isArray(data)) setter(data);
+        }
+      } catch (e) {
+        console.error(`Failed to load ${path} from server`, e);
+      }
+    };
+
+    const loadAll = async () => {
+      await Promise.all([
+        loadAccountsFromServer(),
+        loadFromServer('requests', setRequests),
+        loadFromServer('transactions', setTransactions),
+        loadFromServer('notifications', setNotifications),
+        loadFromServer('businesses', setBusinesses),
+        loadFromServer('bills', setBills),
+        loadFromServer('notices', setNotices)
+      ]);
+      setIsInitialLoadComplete(true);
+    };
+
+    socket.on('connect', () => {
+      console.log('Socket connected, fetching fresh data...');
+      loadAll();
     });
 
     socket.on('data-update-requests', (data) => { setRequests(data); });
@@ -135,37 +168,29 @@ const App: React.FC = () => {
       } catch (e) { console.error(e); }
     }
 
-    const loadFromServer = async (path: string, setter: Function) => {
-      try {
-        const response = await fetch(getApiUrl(`/api/${path}`), { cache: 'no-store' });
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.length > 0) setter(data);
-        }
-      } catch (e) {
-        console.error(`Failed to load ${path} from server`, e);
-      }
-    };
-
-    const loadAll = async () => {
-      await Promise.all([
-        loadAccountsFromServer(),
-        loadFromServer('requests', setRequests),
-        loadFromServer('transactions', setTransactions),
-        loadFromServer('notifications', setNotifications),
-        loadFromServer('businesses', setBusinesses),
-        loadFromServer('bills', setBills),
-        loadFromServer('notices', setNotices)
-      ]);
-      setIsInitialLoadComplete(true);
-    };
-
     loadAll();
 
     return () => {
       socket.disconnect();
     };
   }, []);
+
+  // Keep current user state in sync with allAccounts updates
+  useEffect(() => {
+    if (user && allAccounts.length > 0) {
+      const updatedUser = allAccounts.find(a => a.id === user.id);
+      if (updatedUser) {
+        // Only update if something actually changed to avoid infinite loops
+        const userStr = JSON.stringify(user);
+        const updatedStr = JSON.stringify(updatedUser);
+        if (userStr !== updatedStr) {
+          console.log("Syncing local user state with server update");
+          setUser(updatedUser);
+          localStorage.setItem('mygaav_active_session', updatedStr);
+        }
+      }
+    }
+  }, [allAccounts, user]);
 
   const handleLogin = (profile: UserProfile) => {
     setUser(profile);
@@ -419,6 +444,10 @@ const App: React.FC = () => {
               notifications={userNotifications}
               onOpenNotifications={() => setCurrentView('notifications')}
               onUpdateBusiness={handleUpdateBusiness}
+              onDeleteBusiness={(id) => {
+                setBusinesses(prev => prev.filter(b => b.id !== id));
+                syncItemToServer('businesses', 'delete', { id });
+              }}
               onUpdateResident={handleUpdateResident}
               onUpdateStatus={updateRequestStatus} 
               onIssueBill={(b) => {

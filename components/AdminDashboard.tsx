@@ -21,8 +21,9 @@ interface AdminDashboardProps {
   businesses: LocalBusiness[];
   notifications: AppNotification[];
   onOpenNotifications: () => void;
-  onUpdateBusinesses: (biz: LocalBusiness[]) => void;
-  onUpdateResidents: (residents: UserProfile[]) => void;
+  onUpdateBusiness: (biz: LocalBusiness) => void;
+  onDeleteBusiness: (id: string) => void;
+  onUpdateResident: (resident: UserProfile) => void;
   onUpdateStatus: (id: string, status: RequestStatus, report?: string, adminDoc?: FileMetadata) => void;
   onIssueBill: (bill: Bill) => void;
   onMarkBillPaid: (id: string) => void;
@@ -272,8 +273,8 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
 });
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-  lang, user, requests, residents, bills, notices, transactions, businesses, notifications, onOpenNotifications, onUpdateBusinesses,
-  onUpdateResidents, onUpdateStatus, onIssueBill, onMarkBillPaid, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
+  lang, user, requests, residents, bills, notices, transactions, businesses, notifications, onOpenNotifications, onUpdateBusiness, onDeleteBusiness,
+  onUpdateResident, onUpdateStatus, onIssueBill, onMarkBillPaid, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
 }) => {
   const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses' | 'approvals'>('requests');
   const [selectedResident, setSelectedResident] = useState<UserProfile | null>(null);
@@ -475,24 +476,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       pincode: managedPincode,
       status: 'Approved'
     };
-    onUpdateBusinesses([...businesses, newBiz]);
+    onUpdateBusiness(newBiz);
     setShowBizForm(false);
     setBizData({ name: '', category: 'Grocery', contact: '', hours: '9 AM - 8 PM', description: '', ownerName: '' });
   };
 
   const handleApproveBusiness = (id: string) => {
-    const updated = businesses.map(b => b.id === id ? { ...b, status: 'Approved' } as LocalBusiness : b);
-    onUpdateBusinesses(updated);
+    const biz = businesses.find(b => b.id === id);
+    if (biz) {
+      onUpdateBusiness({ ...biz, status: 'Approved' });
+    }
   };
 
   const handleApproveUser = (id: string) => {
-    const updated = residents.map(r => r.id === id ? { ...r, status: 'approved' } as UserProfile : r);
-    onUpdateResidents(updated);
+    const res = residents.find(r => r.id === id);
+    if (res) {
+      onUpdateResident({ ...res, status: 'approved' });
+    }
   };
 
   const handleRejectUser = (id: string) => {
-    const updated = residents.map(r => r.id === id ? { ...r, status: 'rejected' } as UserProfile : r);
-    onUpdateResidents(updated);
+    const res = residents.find(r => r.id === id);
+    if (res) {
+      onUpdateResident({ ...res, status: 'rejected' });
+    }
   };
 
   const handleDownloadProof = (proof: FileMetadata) => {
@@ -981,7 +988,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                <button onClick={() => handleApproveBusiness(biz.id)} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-black text-[9px] uppercase tracking-widest">
                                   Approve
                                </button>
-                               <button onClick={() => onUpdateBusinesses(businesses.filter(b => b.id !== biz.id))} className="px-3 bg-rose-50 text-rose-500 rounded-lg">
+                               <button onClick={() => onDeleteBusiness(biz.id)} className="px-3 bg-rose-50 text-rose-500 rounded-lg">
                                   <Trash2 size={12} />
                                </button>
                             </div>
