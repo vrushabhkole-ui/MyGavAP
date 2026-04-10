@@ -280,69 +280,6 @@ async function startServer() {
     res.json(readData(KEYS_FILE));
   });
 
-  // OTP Auth Routes
-  app.post(["/api/auth/otp/send", "/api/auth/otp/send/"], async (req, res) => {
-    const { mobile, type } = req.body; // type: 'login' | 'register'
-    if (!mobile || !/^\d{10}$/.test(String(mobile))) {
-      return res.status(400).json({ error: "Invalid mobile number." });
-    }
-
-    const accounts = await getAccounts();
-    const user = accounts.find((a: any) => String(a.mobile) === String(mobile));
-
-    if (type === 'login' && !user) {
-      return res.status(404).json({ error: "Mobile number not registered." });
-    }
-    if (type === 'register' && user) {
-      return res.status(400).json({ error: "Mobile number already registered." });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    OTP_STORE[mobile] = {
-      code: otp,
-      expires: Date.now() + 5 * 60 * 1000 // 5 minutes
-    };
-
-    console.log(`[OTP] Sent to ${mobile}: ${otp}`);
-    // In a real app, you would call an SMS gateway here (e.g., Twilio, Msg91)
-    
-    res.json({ success: true, message: "OTP sent successfully.", otp });
-  });
-
-  app.post(["/api/auth/otp/verify", "/api/auth/otp/verify/"], async (req, res) => {
-    const { mobile, otp, type, accountData } = req.body;
-    const stored = OTP_STORE[mobile];
-
-    if (!stored || stored.code !== otp || stored.expires < Date.now()) {
-      return res.status(400).json({ error: "Invalid or expired OTP." });
-    }
-
-    delete OTP_STORE[mobile];
-
-    const accounts = await getAccounts();
-    if (type === 'login') {
-      const user = accounts.find((a: any) => String(a.mobile) === String(mobile));
-      if (!user) return res.status(404).json({ error: "User not found." });
-      res.json({ success: true, account: user });
-    } else {
-      // For registration, we might want to actually create the account here or just return success
-      // If accountData is provided, we create it
-      if (accountData) {
-        const exists = accounts.find((a: any) => 
-          (a.email && accountData.email && a.email.toLowerCase() === accountData.email.toLowerCase()) || 
-          (String(a.mobile) === String(mobile))
-        );
-        if (exists) return res.status(400).json({ error: "Account already exists." });
-        
-        const updatedAccounts = await saveAccount(accountData);
-        io.emit('data-update-accounts', updatedAccounts);
-        res.json({ success: true, account: accountData });
-      } else {
-        res.json({ success: true, message: "OTP verified." });
-      }
-    }
-  });
-
   // Specific Auth Routes
   app.post(["/api/auth/login", "/api/auth/login/"], async (req, res) => {
     console.log("Login request received for:", req.body?.email);

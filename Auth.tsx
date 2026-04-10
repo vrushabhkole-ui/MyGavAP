@@ -141,14 +141,50 @@ const VillageSearch = ({
 };
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+  const [showInstructions, setShowInstructions] = useState(() => {
+    return localStorage.getItem('mygaav_instructions_read') !== 'true';
+  });
+  const [instructionsAccepted, setInstructionsAccepted] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [role, setRole] = useState<UserRole>('user');
-  const [authMethod, setAuthMethod] = useState<'password' | 'otp'>('password');
-  const [otpStep, setOtpStep] = useState<'request' | 'verify'>('request');
-  const [otpValue, setOtpValue] = useState('');
-  const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [lang, setLang] = useState<'en' | 'hi' | 'mr'>('en');
+
+  const INSTRUCTIONS = {
+    en: {
+      title: "Registration Instructions",
+      steps: [
+        "Select your role: Resident or Officer.",
+        "Search and select your Village or Pincode accurately.",
+        "Select your assigned Village Admin from the dropdown.",
+        "Fill in your personal and account details to register."
+      ],
+      agree: "I have read and understood the instructions.",
+      btn: "Proceed to Login"
+    },
+    hi: {
+      title: "पंजीकरण के लिए निर्देश",
+      steps: [
+        "अपनी भूमिका चुनें: निवासी या अधिकारी।",
+        "अपने गांव या पिनकोड को खोजें और सही ढंग से चुनें।",
+        "ड्रॉपडाउन से अपने गांव के एडमिन (Admin) का चयन करें।",
+        "पंजीकरण करने के लिए अपना व्यक्तिगत और खाता विवरण भरें।"
+      ],
+      agree: "मैंने निर्देशों को पढ़ और समझ लिया है।",
+      btn: "लॉगिन के लिए आगे बढ़ें"
+    },
+    mr: {
+      title: "नोंदणीसाठी सूचना",
+      steps: [
+        "आपली भूमिका निवडा: रहिवासी किंवा अधिकारी.",
+        "आपले गाव किंवा पिनकोड शोधा आणि अचूकपणे निवडा.",
+        "ड्रॉपडाउनमधून आपल्या गावच्या प्रशासकाची (Admin) निवड करा.",
+        "नोंदणी करण्यासाठी आपली वैयक्तिक आणि खात्याची माहिती भरा."
+      ],
+      agree: "मी सूचना वाचल्या आणि समजून घेतल्या आहेत.",
+      btn: "लॉगिनसाठी पुढे जा"
+    }
+  };
   
   const [formData, setFormData] = useState({
     name: '',
@@ -349,15 +385,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setError('');
     setSuccessMsg('');
 
-    if (authMethod === 'otp') {
-      if (otpStep === 'request') {
-        handleSendOtp();
-      } else {
-        handleVerifyOtp();
-      }
-      return;
-    }
-
     const emailKey = (formData.email || '').trim().toLowerCase();
 
     if (!isLogin && role === 'admin') {
@@ -488,91 +515,73 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
   };
 
-  const handleSendOtp = async () => {
-    if (!isLogin && role === 'user' && !formData.assignedAdminId) {
-      setError('Please select an admin to continue.');
-      return;
-    }
+  if (showInstructions) {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
+        <div className="bg-white pt-6 pb-4 px-4 flex flex-col items-center gap-2 border-b border-slate-100 shadow-sm relative shrink-0">
+          <Logo size="md" />
+          <div className="flex bg-slate-100 p-1 rounded-xl mt-1">
+            {(['en', 'hi', 'mr'] as const).map(l => (
+              <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-lg text-[10px] font-black ${lang === l ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>{l.toUpperCase()}</button>
+            ))}
+          </div>
+        </div>
 
-    if (!formData.mobile || !/^\d{10}$/.test(formData.mobile)) {
-      setError('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    setError('');
-    setIsOtpLoading(true);
-    try {
-      const response = await fetch(getApiUrl('/api/auth/otp/send'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile: formData.mobile, type: isLogin ? 'login' : 'register' })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setOtpStep('verify');
-        setSuccessMsg(`OTP sent! (Demo OTP: ${data.otp})`);
-      } else {
-        setError(data.error || 'Failed to send OTP');
-      }
-    } catch (e) {
-      setError('Connection error. Please try again.');
-    } finally {
-      setIsOtpLoading(false);
-    }
-  };
+        <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col">
+          <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex-1 flex flex-col">
+            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                <FileText size={20} className="text-emerald-600" />
+              </div>
+              <h2 className="text-lg font-black text-slate-800 leading-tight">{INSTRUCTIONS[lang].title}</h2>
+            </div>
 
-  const handleVerifyOtp = async () => {
-    if (!otpValue || otpValue.length !== 6) {
-      setError('Please enter a valid 6-digit OTP');
-      return;
-    }
-    setError('');
-    setIsOtpLoading(true);
+            <div className="space-y-4 flex-1">
+              {INSTRUCTIONS[lang].steps.map((step, idx) => (
+                <div key={idx} className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-xs font-black text-slate-600">{idx + 1}</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700 leading-snug">{step}</p>
+                </div>
+              ))}
+            </div>
 
-    let accountData = null;
-    if (!isLogin) {
-      accountData = {
-        id: `MG-${role === 'admin' ? 'OFF' : 'RES'}-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: formData.name,
-        email: formData.email.trim().toLowerCase(),
-        mobile: formData.mobile,
-        pincode: formData.pincode,
-        address: formData.address,
-        state: formData.state,
-        district: formData.district,
-        subDistrict: formData.subDistrict,
-        village: formData.village,
-        role,
-        department: role === 'admin' ? formData.department : undefined,
-        joinedAt: new Date().toLocaleString('en-IN'),
-        status: 'approved',
-        assignedAdminId: role === 'user' ? formData.assignedAdminId : undefined,
-        password: formData.password || 'otp_user'
-      };
-    }
+            <div className="mt-8 space-y-6">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex items-center justify-center shrink-0 mt-0.5">
+                  <input 
+                    type="checkbox" 
+                    className="peer sr-only"
+                    checked={instructionsAccepted}
+                    onChange={(e) => setInstructionsAccepted(e.target.checked)}
+                  />
+                  <div className="w-6 h-6 rounded-lg border-2 border-slate-300 peer-checked:border-emerald-500 peer-checked:bg-emerald-500 transition-all flex items-center justify-center">
+                    <CheckCircle2 size={16} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors select-none">
+                  {INSTRUCTIONS[lang].agree}
+                </span>
+              </label>
 
-    try {
-      const response = await fetch(getApiUrl('/api/auth/otp/verify'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          mobile: formData.mobile, 
-          otp: otpValue, 
-          type: isLogin ? 'login' : 'register',
-          accountData
-        })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        onLogin(data.account);
-      } else {
-        setError(data.error || 'Invalid OTP');
-      }
-    } catch (e) {
-      setError('Connection error. Please try again.');
-    } finally {
-      setIsOtpLoading(false);
-    }
-  };
+              <button 
+                type="button"
+                disabled={!instructionsAccepted}
+                onClick={() => {
+                  localStorage.setItem('mygaav_instructions_read', 'true');
+                  setShowInstructions(false);
+                }}
+                className="w-full py-4 rounded-2xl font-black text-white uppercase text-[12px] tracking-widest active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-600 disabled:active:scale-100"
+              >
+                {INSTRUCTIONS[lang].btn} <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (role === 'developer') {
     return (
@@ -650,9 +659,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
-      <div className="bg-white pt-10 pb-6 px-4 flex flex-col items-center gap-2 border-b border-slate-100 shadow-sm relative shrink-0">
+      <div className="bg-white pt-6 pb-4 px-4 flex flex-col items-center gap-2 border-b border-slate-100 shadow-sm relative shrink-0">
         <Logo size="md" />
-        <div className="flex bg-slate-100 p-1 rounded-xl mt-2">
+        <div className="flex bg-slate-100 p-1 rounded-xl mt-1">
           {(['en', 'hi', 'mr'] as const).map(l => (
             <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-lg text-[10px] font-black ${lang === l ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>{l.toUpperCase()}</button>
           ))}
@@ -703,32 +712,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           
           <div className="relative z-10">
             <div className="flex bg-slate-50 p-1.5 rounded-2xl mb-8 border border-slate-100 shadow-inner">
-              <button type="button" onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); setOtpStep('request'); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Login</button>
-              <button type="button" onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); setOtpStep('request'); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${!isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Signup</button>
+              <button type="button" onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Login</button>
+              <button type="button" onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }} className={`flex-1 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${!isLogin ? 'bg-white text-slate-800 shadow-md transform scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}>Signup</button>
             </div>
-
-            {(isLogin || !isLogin) && (
-              <div className="flex gap-2 mb-6">
-                <button 
-                  type="button" 
-                  onClick={() => { setAuthMethod('password'); setError(''); }}
-                  className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${authMethod === 'password' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-slate-100 text-slate-400'}`}
-                >
-                  Password
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { setAuthMethod('otp'); setError(''); }}
-                  className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${authMethod === 'otp' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-slate-100 text-slate-400'}`}
-                >
-                  Mobile OTP
-                </button>
-              </div>
-            )}
 
           <form onSubmit={handleAuth} className="space-y-4">
             {isLogin ? (
-              authMethod === 'password' ? (
                 <div className="space-y-5">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Email Address</label>
@@ -749,31 +738,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-5">
-                  {otpStep === 'request' ? (
-                    <div className="space-y-5">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Mobile Number</label>
-                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all shadow-sm">
-                          <Phone size={18} className="text-emerald-600" />
-                          <input required type="tel" pattern="[0-9]{10}" maxLength={10} placeholder="10-digit mobile" className="bg-transparent outline-none text-sm w-full font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-5">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Enter 6-Digit OTP</label>
-                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all shadow-sm">
-                          <Hash size={18} className="text-emerald-600" />
-                          <input required type="text" maxLength={6} placeholder="••••••" className="bg-transparent outline-none text-xl tracking-[0.5em] w-full font-black text-slate-800 text-center" value={otpValue} onChange={e => setOtpValue(e.target.value.replace(/\D/g, ''))} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
             ) : (
               <div className="space-y-8">
                 {/* Personal Details */}
@@ -796,22 +760,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     </div>
                   </div>
                 </div>
-
-                {otpStep === 'verify' && (
-                  <div className="space-y-5 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="flex items-center gap-2 px-2 border-b border-slate-100 pb-3">
-                      <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
-                        <Hash size={12} className="text-amber-600" />
-                      </div>
-                      <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Verify Mobile</h3>
-                    </div>
-                    <div className="flex items-center gap-3 bg-slate-50 border border-amber-200 rounded-2xl px-5 py-4 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 focus-within:bg-white transition-all shadow-sm">
-                      <Hash size={18} className="text-amber-600" />
-                      <input required type="text" maxLength={6} placeholder="Enter 6-Digit OTP" className="bg-transparent outline-none text-xl tracking-[0.5em] w-full font-black text-slate-800 text-center" value={otpValue} onChange={e => setOtpValue(e.target.value.replace(/\D/g, ''))} />
-                    </div>
-                    {successMsg && <p className="text-[10px] font-bold text-emerald-600 text-center">{successMsg}</p>}
-                  </div>
-                )}
 
                 {/* Account Details */}
                 <div className="space-y-5">
@@ -1088,43 +1036,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               </div>
             )}
 
-            {!isLogin || authMethod === 'password' ? (
-              <button 
-                type="submit" 
-                disabled={isOtpLoading}
-                className={`relative z-10 w-full py-5 rounded-2xl font-black text-white uppercase text-[12px] tracking-widest active:scale-95 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 ${role === 'admin' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'} disabled:opacity-50`}
-              >
-                {isOtpLoading ? (
-                  <Loader2 className="animate-spin" size={20} />
-                ) : (
-                  isLogin ? (
-                    authMethod === 'password' ? 'Sign In Securely' : (otpStep === 'request' ? 'Send OTP' : 'Verify & Login')
-                  ) : (
-                    authMethod === 'otp' ? (otpStep === 'request' ? 'Send OTP & Signup' : 'Verify & Signup') : 'Create Account'
-                  )
-                )}
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <button 
-                  type="button"
-                  onClick={otpStep === 'request' ? handleSendOtp : handleVerifyOtp}
-                  disabled={isOtpLoading}
-                  className={`relative z-10 w-full py-5 rounded-2xl font-black text-white uppercase text-[12px] tracking-widest active:scale-95 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 ${role === 'admin' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'} disabled:opacity-50`}
-                >
-                  {isOtpLoading ? <Loader2 className="animate-spin" size={20} /> : (otpStep === 'request' ? 'Send OTP' : 'Verify & Login')}
-                </button>
-                {otpStep === 'verify' && (
-                  <button 
-                    type="button"
-                    onClick={() => setOtpStep('request')}
-                    className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
-                  >
-                    Change Mobile Number
-                  </button>
-                )}
-              </div>
-            )}
+            <button 
+              type="submit" 
+              className={`relative z-10 w-full py-5 rounded-2xl font-black text-white uppercase text-[12px] tracking-widest active:scale-95 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 ${role === 'admin' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'}`}
+            >
+              {isLogin ? 'Sign In Securely' : 'Create Account'}
+            </button>
           </form>
         </div>
         </div>
