@@ -371,6 +371,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       }
     }
 
+    if (!isLogin && role === 'user' && !formData.assignedAdminId) {
+      setError('Please select an admin to continue.');
+      return;
+    }
+
     if (isLogin) {
       try {
         const loginUrl = getApiUrl(`/api/auth/login?t=${Date.now()}`);
@@ -484,6 +489,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   const handleSendOtp = async () => {
+    if (!isLogin && role === 'user' && !formData.assignedAdminId) {
+      setError('Please select an admin to continue.');
+      return;
+    }
+
     if (!formData.mobile || !/^\d{10}$/.test(formData.mobile)) {
       setError('Please enter a valid 10-digit mobile number');
       return;
@@ -499,7 +509,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       const data = await response.json();
       if (response.ok) {
         setOtpStep('verify');
-        setSuccessMsg('OTP sent to your mobile number');
+        setSuccessMsg(`OTP sent! (Demo OTP: ${data.otp})`);
       } else {
         setError(data.error || 'Failed to send OTP');
       }

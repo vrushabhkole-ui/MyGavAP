@@ -306,7 +306,7 @@ async function startServer() {
     console.log(`[OTP] Sent to ${mobile}: ${otp}`);
     // In a real app, you would call an SMS gateway here (e.g., Twilio, Msg91)
     
-    res.json({ success: true, message: "OTP sent successfully." });
+    res.json({ success: true, message: "OTP sent successfully.", otp });
   });
 
   app.post(["/api/auth/otp/verify", "/api/auth/otp/verify/"], async (req, res) => {
