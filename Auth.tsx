@@ -518,9 +518,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   if (showInstructions) {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
-        <div className="bg-white pt-6 pb-4 px-4 flex flex-col items-center gap-2 border-b border-slate-100 shadow-sm relative shrink-0">
+        <div className="bg-white pt-6 pb-4 px-6 flex items-center justify-between border-b border-slate-100 shadow-sm relative shrink-0">
           <Logo size="md" />
-          <div className="flex bg-slate-100 p-1 rounded-xl mt-1">
+          <div className="flex bg-slate-100 p-1 rounded-xl">
             {(['en', 'hi', 'mr'] as const).map(l => (
               <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-lg text-[10px] font-black ${lang === l ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>{l.toUpperCase()}</button>
             ))}
@@ -659,14 +659,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-slate-50 flex flex-col overflow-hidden">
-      <div className="bg-white pt-6 pb-4 px-4 flex flex-col items-center gap-2 border-b border-slate-100 shadow-sm relative shrink-0">
+      <div className="bg-white pt-6 pb-4 px-6 flex items-center justify-between border-b border-slate-100 shadow-sm relative shrink-0">
         <Logo size="md" />
-        <div className="flex bg-slate-100 p-1 rounded-xl mt-1">
+        <div className="flex bg-slate-100 p-1 rounded-xl">
           {(['en', 'hi', 'mr'] as const).map(l => (
             <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-lg text-[10px] font-black ${lang === l ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>{l.toUpperCase()}</button>
           ))}
         </div>
-        
+      </div>
+      
+      <div className="px-6">
         {serverStatus === 'offline' && (
           <div className="mt-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
