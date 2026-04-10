@@ -6,9 +6,48 @@ import { fileURLToPath } from "url";
 import { Server as SocketIOServer } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+let db: any = null;
+try {
+  const firebaseConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'firebase-applet-config.json'), 'utf8'));
+  const firebaseApp = initializeApp(firebaseConfig);
+  db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+  console.log("Firebase initialized successfully in server");
+} catch (e) {
+  console.error("Failed to initialize Firebase in server:", e);
+}
+
+const getAccounts = async () => {
+  if (!db) return readData(REGISTRY_FILE);
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    return snapshot.docs.map(doc => doc.data());
+  } catch (e) {
+    console.error("Error fetching accounts from Firestore:", e);
+    return readData(REGISTRY_FILE);
+  }
+};
+
+const saveAccount = async (account: any) => {
+  if (!db) {
+    const accounts = readData(REGISTRY_FILE);
+    accounts.push(account);
+    saveData(REGISTRY_FILE, accounts);
+    return accounts;
+  }
+  try {
+    await setDoc(doc(db, 'users', account.id), account);
+    return await getAccounts();
+  } catch (e) {
+    console.error("Error saving account to Firestore:", e);
+    throw e;
+  }
+};
 
 const DATA_DIR = (() => {
   const defaultDir = path.join(__dirname, "data");
@@ -36,6 +75,7 @@ const NOTICES_FILE = path.join(DATA_DIR, "notices.json");
 const NOTIFS_FILE = path.join(DATA_DIR, "notifications.json");
 const BIZ_FILE = path.join(DATA_DIR, "businesses.json");
 const KEYS_FILE = path.join(DATA_DIR, "officer_keys.json");
+const OTP_STORE: Record<string, { code: string, expires: number }> = {};
 
 // Ensure data directory exists (double check)
 if (!fs.existsSync(DATA_DIR)) {
@@ -161,35 +201,78 @@ async function startServer() {
   ];
 
   dataRoutes.forEach(route => {
-    app.get([`/api/${route.path}`, `/api/${route.path}/`], (req, res) => {
-      res.json(readData(route.file));
-    });
-
-    app.post([`/api/${route.path}`, `/api/${route.path}/`], (req, res) => {
-      saveData(route.file, req.body);
-      io.emit(`data-update-${route.path}`, req.body);
-      res.json({ success: true });
-    });
-
-    app.post([`/api/${route.path}/sync`, `/api/${route.path}/sync/`], (req, res) => {
-      const { action, item } = req.body;
-      let currentData = readData(route.file);
-      if (!Array.isArray(currentData)) currentData = [];
-      
-      if (action === 'add' || action === 'update') {
-        const exists = currentData.findIndex((x: any) => x.id === item.id);
-        if (exists >= 0) {
-          currentData[exists] = { ...currentData[exists], ...item };
-        } else {
-          currentData.unshift(item);
-        }
-      } else if (action === 'delete') {
-        currentData = currentData.filter((x: any) => x.id !== item.id);
+    app.get([`/api/${route.path}`, `/api/${route.path}/`], async (req, res) => {
+      if (route.path === 'accounts') {
+        res.json(await getAccounts());
+      } else {
+        res.json(readData(route.file));
       }
+    });
+
+    app.post([`/api/${route.path}`, `/api/${route.path}/`], async (req, res) => {
+      if (route.path === 'accounts') {
+        // req.body is an array of accounts in this route
+        // This is a bulk save, which is tricky. Let's just use the local file for bulk, or skip it.
+        // Actually, the frontend might be sending the full array.
+        // Let's just save the first one if it's an array, or iterate.
+        // Wait, the frontend usually uses /sync for individual updates.
+        // If it sends a full array, we can just save them all.
+        if (Array.isArray(req.body)) {
+          for (const acc of req.body) {
+            if (db) await setDoc(doc(db, 'users', acc.id), acc);
+          }
+        }
+        const accounts = await getAccounts();
+        io.emit(`data-update-${route.path}`, accounts);
+        res.json({ success: true });
+      } else {
+        saveData(route.file, req.body);
+        io.emit(`data-update-${route.path}`, req.body);
+        res.json({ success: true });
+      }
+    });
+
+    app.post([`/api/${route.path}/sync`, `/api/${route.path}/sync/`], async (req, res) => {
+      const { action, item } = req.body;
       
-      saveData(route.file, currentData);
-      io.emit(`data-update-${route.path}`, currentData);
-      res.json({ success: true, data: currentData });
+      if (route.path === 'accounts') {
+        let currentData = await getAccounts();
+        if (action === 'add' || action === 'update') {
+          await saveAccount(item);
+          currentData = await getAccounts();
+        } else if (action === 'delete') {
+          // We need a deleteAccount function, but for now we can just ignore delete or implement it
+          // Let's just implement it inline
+          if (db) {
+            const { deleteDoc } = await import('firebase/firestore');
+            await deleteDoc(doc(db, 'users', item.id));
+          } else {
+            currentData = currentData.filter((x: any) => x.id !== item.id);
+            saveData(route.file, currentData);
+          }
+          currentData = await getAccounts();
+        }
+        io.emit(`data-update-${route.path}`, currentData);
+        res.json({ success: true, data: currentData });
+      } else {
+        let currentData = readData(route.file);
+        if (!Array.isArray(currentData)) currentData = [];
+        
+        if (action === 'add' || action === 'update') {
+          const exists = currentData.findIndex((x: any) => x.id === item.id);
+          if (exists >= 0) {
+            currentData[exists] = { ...currentData[exists], ...item };
+          } else {
+            currentData.unshift(item);
+          }
+        } else if (action === 'delete') {
+          currentData = currentData.filter((x: any) => x.id !== item.id);
+        }
+        
+        saveData(route.file, currentData);
+        io.emit(`data-update-${route.path}`, currentData);
+        res.json({ success: true, data: currentData });
+      }
     });
   });
 
@@ -197,11 +280,74 @@ async function startServer() {
     res.json(readData(KEYS_FILE));
   });
 
+  // OTP Auth Routes
+  app.post(["/api/auth/otp/send", "/api/auth/otp/send/"], async (req, res) => {
+    const { mobile, type } = req.body; // type: 'login' | 'register'
+    if (!mobile || !/^\d{10}$/.test(String(mobile))) {
+      return res.status(400).json({ error: "Invalid mobile number." });
+    }
+
+    const accounts = await getAccounts();
+    const user = accounts.find((a: any) => String(a.mobile) === String(mobile));
+
+    if (type === 'login' && !user) {
+      return res.status(404).json({ error: "Mobile number not registered." });
+    }
+    if (type === 'register' && user) {
+      return res.status(400).json({ error: "Mobile number already registered." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    OTP_STORE[mobile] = {
+      code: otp,
+      expires: Date.now() + 5 * 60 * 1000 // 5 minutes
+    };
+
+    console.log(`[OTP] Sent to ${mobile}: ${otp}`);
+    // In a real app, you would call an SMS gateway here (e.g., Twilio, Msg91)
+    
+    res.json({ success: true, message: "OTP sent successfully." });
+  });
+
+  app.post(["/api/auth/otp/verify", "/api/auth/otp/verify/"], async (req, res) => {
+    const { mobile, otp, type, accountData } = req.body;
+    const stored = OTP_STORE[mobile];
+
+    if (!stored || stored.code !== otp || stored.expires < Date.now()) {
+      return res.status(400).json({ error: "Invalid or expired OTP." });
+    }
+
+    delete OTP_STORE[mobile];
+
+    const accounts = await getAccounts();
+    if (type === 'login') {
+      const user = accounts.find((a: any) => String(a.mobile) === String(mobile));
+      if (!user) return res.status(404).json({ error: "User not found." });
+      res.json({ success: true, account: user });
+    } else {
+      // For registration, we might want to actually create the account here or just return success
+      // If accountData is provided, we create it
+      if (accountData) {
+        const exists = accounts.find((a: any) => 
+          (a.email && accountData.email && a.email.toLowerCase() === accountData.email.toLowerCase()) || 
+          (String(a.mobile) === String(mobile))
+        );
+        if (exists) return res.status(400).json({ error: "Account already exists." });
+        
+        const updatedAccounts = await saveAccount(accountData);
+        io.emit('data-update-accounts', updatedAccounts);
+        res.json({ success: true, account: accountData });
+      } else {
+        res.json({ success: true, message: "OTP verified." });
+      }
+    }
+  });
+
   // Specific Auth Routes
-  app.post(["/api/auth/login", "/api/auth/login/"], (req, res) => {
+  app.post(["/api/auth/login", "/api/auth/login/"], async (req, res) => {
     console.log("Login request received for:", req.body?.email);
     const { email, password, role, department } = req.body;
-    const accounts = readData(REGISTRY_FILE);
+    const accounts = await getAccounts();
     
     const user = accounts.find((a: any) => 
       a.email && email && a.email.toLowerCase() === email.toLowerCase() && 
@@ -229,7 +375,7 @@ async function startServer() {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
-  app.post(["/api/auth/register", "/api/auth/register/"], (req, res) => {
+  app.post(["/api/auth/register", "/api/auth/register/"], async (req, res) => {
     console.log("Received registration request for:", req.body?.email);
     try {
       const newAccount = req.body;
@@ -248,7 +394,7 @@ async function startServer() {
       }
 
       // console.log("Registering:", newAccount.email, newAccount.role);
-      let accounts = readData(REGISTRY_FILE);
+      let accounts = await getAccounts();
       if (!Array.isArray(accounts)) {
         accounts = [];
       }
@@ -263,11 +409,10 @@ async function startServer() {
         return res.status(400).json({ error: "Account already exists." });
       }
 
-      accounts.push(newAccount);
-      saveData(REGISTRY_FILE, accounts);
-      io.emit('data-update-accounts', accounts);
+      const updatedAccounts = await saveAccount(newAccount);
+      io.emit('data-update-accounts', updatedAccounts);
       console.log("Registration successful for:", newAccount.email);
-      res.json({ success: true, account: newAccount, accounts });
+      res.json({ success: true, account: newAccount, accounts: updatedAccounts });
     } catch (e: any) {
       console.error("Registration error:", e);
       res.status(500).json({ 
