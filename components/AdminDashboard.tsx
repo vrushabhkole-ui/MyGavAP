@@ -7,6 +7,8 @@ import {
   ClipboardList, CreditCard, Search, IndianRupee, Phone, Mail, Globe, Building2, UserCheck,
   UploadCloud, FileCheck, Save, MessageSquare, Store, Send, Check, Filter, Bell
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { ServiceRequest, Language, RequestStatus, ServiceType, UserProfile, Bill, BillType, VillageNotice, FileMetadata, Transaction, LocalBusiness, AppNotification } from '../types.ts';
 import { SERVICES, DICTIONARY } from '../constants.tsx';
 
@@ -184,7 +186,70 @@ const ProcessRequestModal: React.FC<{
   );
 });
 
-const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void }> = React.memo(({ resident, onClose }) => {
+const ResidentDetailModal: React.FC<{ 
+  resident: UserProfile; 
+  requests: ServiceRequest[];
+  bills: Bill[];
+  transactions: Transaction[];
+  onClose: () => void;
+}> = React.memo(({ resident, requests, bills, transactions, onClose }) => {
+
+  const handleDownloadReport = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text(`Citizen Report: ${resident.name}`, 14, 22);
+    
+    doc.setFontSize(11);
+    doc.text(`ID: ${resident.id}`, 14, 30);
+    doc.text(`Email: ${resident.email}`, 14, 36);
+    doc.text(`Mobile: ${resident.mobile || 'Not Provided'}`, 14, 42);
+    doc.text(`Address: ${resident.address}, ${resident.village}, ${resident.subDistrict}, ${resident.district} - ${resident.pincode}`, 14, 48);
+    doc.text(`Joined: ${resident.joinedAt}`, 14, 54);
+
+    let startY = 64;
+
+    // Transactions
+    const userTxns = transactions.filter(t => t.userId === resident.id);
+    if (userTxns.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Transactions', 14, startY);
+      autoTable(doc, {
+        startY: startY + 4,
+        head: [['ID', 'Type', 'Amount', 'Date', 'Status']],
+        body: userTxns.map(t => [t.id, t.type, `Rs. ${t.amount}`, t.timestamp, t.status]),
+      });
+      startY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Requests
+    const userReqs = requests.filter(r => r.userId === resident.id);
+    if (userReqs.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Service Requests', 14, startY);
+      autoTable(doc, {
+        startY: startY + 4,
+        head: [['ID', 'Service', 'Date', 'Status']],
+        body: userReqs.map(r => [r.id, r.serviceTitle, r.createdAt, r.status]),
+      });
+      startY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Bills
+    const userBills = bills.filter(b => b.userId === resident.id);
+    if (userBills.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Bills', 14, startY);
+      autoTable(doc, {
+        startY: startY + 4,
+        head: [['ID', 'Type', 'Amount', 'Due Date', 'Status']],
+        body: userBills.map(b => [b.id, b.type, `Rs. ${b.amount}`, b.dueDate, b.status]),
+      });
+    }
+
+    doc.save(`${resident.name.replace(/\s+/g, '_')}_Report.pdf`);
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className="relative w-full max-w-sm bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
@@ -260,12 +325,20 @@ const ResidentDetailModal: React.FC<{ resident: UserProfile; onClose: () => void
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-          >
-            Close Details
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleDownloadReport}
+              className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Download size={14} /> PDF Report
+            </button>
+            <button 
+              onClick={onClose}
+              className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -801,7 +874,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'peoples' && (
              <div className="space-y-3">
-                <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">Registered Citizens</h3>
+                <div className="flex items-center justify-between px-1 mb-2">
+                  <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Registered Citizens</h3>
+                  <button 
+                    onClick={() => {
+                      const doc = new jsPDF();
+                      doc.setFontSize(18);
+                      doc.text(`Resident List: ${managedVillage}`, 14, 22);
+                      
+                      autoTable(doc, {
+                        startY: 30,
+                        head: [['Name', 'ID', 'Mobile', 'Status', 'Joined']],
+                        body: villageCitizens.map(c => [c.name, c.id, c.mobile || 'N/A', c.status || 'Approved', c.joinedAt]),
+                      });
+
+                      doc.save(`${managedVillage.replace(/\s+/g, '_')}_Residents.pdf`);
+                    }}
+                    className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                  >
+                    <Download size={12} /> List
+                  </button>
+                </div>
                 {villageCitizens.length === 0 ? (
                   <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
                      <p className="text-[9px] font-black uppercase tracking-widest">No matching residents</p>
@@ -1003,6 +1096,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {selectedResident && (
         <ResidentDetailModal 
           resident={selectedResident} 
+          requests={requests}
+          bills={bills}
+          transactions={transactions}
           onClose={() => setSelectedResident(null)} 
         />
       )}
