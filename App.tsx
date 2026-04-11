@@ -53,6 +53,7 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedVillages, setSelectedVillages] = useState<string[]>([]);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const [isDesktopMode, setIsDesktopMode] = useState(false);
   const lastSyncedData = React.useRef<Record<string, string>>({});
 
   // Persistence Helpers
@@ -396,7 +397,7 @@ const App: React.FC = () => {
   if (!user) return <Auth onLogin={handleLogin} />;
 
   return (
-    <div className="max-w-md mx-auto bg-slate-50 h-[100dvh] relative shadow-2xl overflow-hidden flex flex-col">
+    <div className={`${isDesktopMode ? 'w-full' : 'max-w-md mx-auto'} bg-slate-50 h-[100dvh] relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500`}>
       <main className="flex-1 overflow-hidden relative">
         {isViewLoading && (
           <div className="absolute inset-0 z-[60] bg-slate-50/80 backdrop-blur-[2px] flex flex-col items-center justify-center animate-in fade-in duration-300">
@@ -442,6 +443,8 @@ const App: React.FC = () => {
               transactions={adminData.transactions}
               businesses={adminData.businesses}
               notifications={userNotifications}
+              isDesktopMode={isDesktopMode}
+              onToggleDesktopMode={() => setIsDesktopMode(!isDesktopMode)}
               onOpenNotifications={() => setCurrentView('notifications')}
               onUpdateBusiness={handleUpdateBusiness}
               onDeleteBusiness={(id) => {

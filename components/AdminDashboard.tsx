@@ -5,7 +5,7 @@ import {
   FileText, ShieldCheck, History as HistoryIcon, Trash2, Download, 
   FileBadge, Users, TrendingUp, ChevronRight, User as UserIcon,
   ClipboardList, CreditCard, Search, IndianRupee, Phone, Mail, Globe, Building2, UserCheck,
-  UploadCloud, FileCheck, Save, MessageSquare, Store, Send, Check, Filter, Bell
+  UploadCloud, FileCheck, Save, MessageSquare, Store, Send, Check, Filter, Bell, Monitor, Smartphone
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +22,8 @@ interface AdminDashboardProps {
   transactions: Transaction[];
   businesses: LocalBusiness[];
   notifications: AppNotification[];
+  isDesktopMode?: boolean;
+  onToggleDesktopMode?: () => void;
   onOpenNotifications: () => void;
   onUpdateBusiness: (biz: LocalBusiness) => void;
   onDeleteBusiness: (id: string) => void;
@@ -346,7 +348,7 @@ const ResidentDetailModal: React.FC<{
 });
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-  lang, user, requests, residents, bills, notices, transactions, businesses, notifications, onOpenNotifications, onUpdateBusiness, onDeleteBusiness,
+  lang, user, requests, residents, bills, notices, transactions, businesses, notifications, isDesktopMode, onToggleDesktopMode, onOpenNotifications, onUpdateBusiness, onDeleteBusiness,
   onUpdateResident, onUpdateStatus, onIssueBill, onMarkBillPaid, onDeleteBill, onIssueNotice, onDeleteNotice, onLogout 
 }) => {
   const [activeTab, setActiveTab] = useState<'requests' | 'peoples' | 'billing' | 'notices' | 'history' | 'businesses' | 'approvals'>('requests');
@@ -604,8 +606,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <div className="bg-slate-50 h-full flex flex-col animate-slide-in overflow-hidden relative">
-      <header className={`z-20 px-4 pt-4 pb-4 ${themeBg} text-white rounded-b-[40px] shadow-2xl sticky top-0 transition-colors duration-500`}>
+    <div className={`bg-slate-50 h-full flex ${isDesktopMode ? 'flex-row' : 'flex-col'} animate-slide-in overflow-hidden relative`}>
+      <header className={`z-20 px-4 pt-4 pb-4 ${themeBg} text-white ${isDesktopMode ? 'w-80 h-full flex flex-col rounded-r-[40px] overflow-y-auto hide-scrollbar flex-shrink-0' : 'rounded-b-[40px] sticky top-0'} shadow-2xl transition-colors duration-500`}>
         <div className="flex items-center justify-between mb-3 px-2">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-white/10 rounded-[14px] flex items-center justify-center border border-white/10 backdrop-blur-md">
@@ -620,9 +622,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                </p>
              </div>
           </div>
-          <button onClick={onLogout} className="p-2.5 bg-white/10 border border-white/10 rounded-xl active:scale-90 transition-all backdrop-blur-md">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            {onToggleDesktopMode && (
+              <button onClick={onToggleDesktopMode} className="p-2.5 bg-white/10 border border-white/10 rounded-xl active:scale-90 transition-all backdrop-blur-md" title={isDesktopMode ? "Switch to Mobile View" : "Switch to Desktop View"}>
+                {isDesktopMode ? <Smartphone size={18} /> : <Monitor size={18} />}
+              </button>
+            )}
+            <button onClick={onLogout} className="p-2.5 bg-white/10 border border-white/10 rounded-xl active:scale-90 transition-all backdrop-blur-md">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Compressed Global Search Bar */}
@@ -639,33 +648,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white/10 border border-white/5 rounded-2xl p-3 flex flex-col justify-between h-20">
-            <TrendingUp size={14} className="text-emerald-400" />
+        <div className={`grid ${isDesktopMode ? 'grid-cols-1 gap-4 mt-4' : 'grid-cols-3 gap-2'}`}>
+          <div className={`bg-white/10 border border-white/5 rounded-2xl flex flex-col justify-between ${isDesktopMode ? 'h-28 p-5' : 'h-20 p-3'}`}>
+            <TrendingUp size={isDesktopMode ? 20 : 14} className="text-emerald-400" />
             <div>
-              <p className="text-[7px] font-black text-white/50 uppercase tracking-widest">Revenue</p>
-              <span className="text-[12px] font-black tracking-tight">₹{totalRevenue.toLocaleString()}</span>
+              <p className={`${isDesktopMode ? 'text-[9px]' : 'text-[7px]'} font-black text-white/50 uppercase tracking-widest`}>Revenue</p>
+              <span className={`${isDesktopMode ? 'text-xl' : 'text-[12px]'} font-black tracking-tight`}>₹{totalRevenue.toLocaleString()}</span>
             </div>
           </div>
-          <div className="bg-white/10 border border-white/5 rounded-2xl p-3 flex flex-col justify-between h-20">
-            <Clock size={14} className="text-amber-400" />
+          <div className={`bg-white/10 border border-white/5 rounded-2xl flex flex-col justify-between ${isDesktopMode ? 'h-28 p-5' : 'h-20 p-3'}`}>
+            <Clock size={isDesktopMode ? 20 : 14} className="text-amber-400" />
             <div>
-              <p className="text-[7px] font-black text-white/50 uppercase tracking-widest">Tickets</p>
-              <span className="text-[12px] font-black">{filteredRequests.length}</span>
+              <p className={`${isDesktopMode ? 'text-[9px]' : 'text-[7px]'} font-black text-white/50 uppercase tracking-widest`}>Tickets</p>
+              <span className={`${isDesktopMode ? 'text-xl' : 'text-[12px]'} font-black`}>{filteredRequests.length}</span>
             </div>
           </div>
-          <div className="bg-white/10 border border-white/5 rounded-2xl p-3 flex flex-col justify-between h-20">
-            <Receipt size={14} className="text-blue-400" />
+          <div className={`bg-white/10 border border-white/5 rounded-2xl flex flex-col justify-between ${isDesktopMode ? 'h-28 p-5' : 'h-20 p-3'}`}>
+            <Receipt size={isDesktopMode ? 20 : 14} className="text-blue-400" />
             <div>
-              <p className="text-[7px] font-black text-white/50 uppercase tracking-widest">Active Bills</p>
-              <span className="text-[12px] font-black">{filteredBills.length}</span>
+              <p className={`${isDesktopMode ? 'text-[9px]' : 'text-[7px]'} font-black text-white/50 uppercase tracking-widest`}>Active Bills</p>
+              <span className={`${isDesktopMode ? 'text-xl' : 'text-[12px]'} font-black`}>{filteredBills.length}</span>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="px-4 mt-4 flex-shrink-0">
-        <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 flex overflow-x-auto hide-scrollbar sticky top-4 z-10">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-4 mt-4 flex-shrink-0">
+          <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 flex overflow-x-auto hide-scrollbar sticky top-4 z-10">
           {[
             { id: 'requests', label: 'Tickets', icon: FileText },
             { id: 'businesses', label: 'Directory', icon: Store },
@@ -678,9 +688,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)} 
-              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}
+              className={`flex-shrink-0 rounded-xl font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isDesktopMode ? 'px-6 py-4 text-xs' : 'px-4 py-2.5 text-[8px]'} ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}
             >
-              <tab.icon size={12} /> {tab.label}
+              <tab.icon size={isDesktopMode ? 16 : 12} /> {tab.label}
             </button>
           ))}
         </div>
@@ -704,7 +714,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className={isDesktopMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
                 {filteredRequests.length === 0 ? (
                   <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
                      <p className="text-[9px] font-black uppercase tracking-widest">No matching tickets</p>
@@ -742,13 +752,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  <div className="text-center">
                     <h3 className="text-lg font-black text-slate-800">Issue New Bill</h3>
                  </div>
-                 <form onSubmit={handleCreateBill} className="space-y-3">
-                    <select required className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={billingData.residentId} onChange={(e) => setBillingData({...billingData, residentId: e.target.value})}>
+                  <form onSubmit={handleCreateBill} className={isDesktopMode ? "grid grid-cols-2 gap-4" : "space-y-3"}>
+                    <select required className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base' : 'p-3 text-sm'}`} value={billingData.residentId} onChange={(e) => setBillingData({...billingData, residentId: e.target.value})}>
                        <option value="">Choose Citizen...</option>
                        {villageCitizens.map(r => <option key={r.id} value={r.id}>{r.name} ({r.id})</option>)}
                     </select>
-                    <input required type="number" placeholder="Amount (₹)" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={billingData.amount} onChange={(e) => setBillingData({...billingData, amount: e.target.value})} />
-                    <select required className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={billingData.type} onChange={(e) => setBillingData({...billingData, type: e.target.value as BillType})}>
+                    <input required type="number" placeholder="Amount (₹)" className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base' : 'p-3 text-sm'}`} value={billingData.amount} onChange={(e) => setBillingData({...billingData, amount: e.target.value})} />
+                    <select required className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} value={billingData.type} onChange={(e) => setBillingData({...billingData, type: e.target.value as BillType})}>
                        {dept === ServiceType.GRAMPANCHAYAT ? (
                          <>
                            <option value="Home Tax">Property Tax</option>
@@ -762,7 +772,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                          <option value="Other Service">Departmental Fee</option>
                        )}
                     </select>
-                    <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">
+                    <button type="submit" className={`w-full bg-emerald-600 text-white rounded-xl font-black uppercase tracking-widest shadow-lg ${isDesktopMode ? 'py-5 text-sm col-span-2' : 'py-4 text-xs'}`}>
                        Send Official Bill
                     </button>
                  </form>
@@ -784,7 +794,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                  </div>
 
-                 <div className="space-y-3">
+                 <div className={isDesktopMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
                    {filteredBills.length === 0 ? (
                       <div className="p-8 text-center bg-white rounded-[28px] border border-dashed border-slate-200 opacity-40">
                          <p className="text-[9px] font-black uppercase tracking-widest">No matching bills</p>
@@ -832,22 +842,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-8">
                <div className="bg-white rounded-[32px] p-6 shadow-lg border border-slate-100 space-y-4">
                   <h3 className="text-lg font-black text-slate-800 text-center">New Notice</h3>
-                  <form onSubmit={handlePostNotice} className="space-y-3">
-                    <input required placeholder="Notice Title" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={noticeData.title} onChange={(e) => setNoticeData({...noticeData, title: e.target.value})} />
-                    <textarea required rows={3} placeholder="Description..." className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={noticeData.content} onChange={(e) => setNoticeData({...noticeData, content: e.target.value})} />
-                    <div className="flex gap-2">
-                       <select className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={noticeData.category} onChange={e => setNoticeData({...noticeData, category: e.target.value as any})}>
+                  <form onSubmit={handlePostNotice} className={isDesktopMode ? "grid grid-cols-2 gap-4" : "space-y-3"}>
+                    <input required placeholder="Notice Title" className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} value={noticeData.title} onChange={(e) => setNoticeData({...noticeData, title: e.target.value})} />
+                    <textarea required rows={isDesktopMode ? 5 : 3} placeholder="Description..." className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none resize-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} value={noticeData.content} onChange={(e) => setNoticeData({...noticeData, content: e.target.value})} />
+                    <div className={`flex gap-2 ${isDesktopMode ? 'col-span-2' : ''}`}>
+                       <select className={`flex-1 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base' : 'p-3 text-sm'}`} value={noticeData.category} onChange={e => setNoticeData({...noticeData, category: e.target.value as any})}>
                           <option value="General">General</option>
                           <option value="Meeting">Meeting</option>
                           <option value="Business">Business</option>
                        </select>
-                       <button type="submit" className="bg-indigo-600 text-white py-3 px-6 rounded-xl font-black text-xs uppercase tracking-widest">Publish</button>
+                       <button type="submit" className={`bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest ${isDesktopMode ? 'py-4 px-8 text-sm' : 'py-3 px-6 text-xs'}`}>Publish</button>
                     </div>
                   </form>
                </div>
 
-               <div className="space-y-3">
-                  <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Village Bulletins ({filteredNotices.length})</h3>
+               <div className={isDesktopMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
+                  <h3 className={`text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 ${isDesktopMode ? 'col-span-full' : ''}`}>Village Bulletins ({filteredNotices.length})</h3>
                   {filteredNotices.length === 0 ? (
                     <div className="p-10 text-center bg-white rounded-[28px] border border-dashed border-slate-200 opacity-40">
                        <p className="text-[9px] font-black uppercase tracking-widest">No local notices</p>
@@ -934,7 +944,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
                 
-                <div className="space-y-3">
+                <div className={isDesktopMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
                   {villageCitizens.filter(r => r.status === 'pending').length === 0 ? (
                     <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
                        <p className="text-[9px] font-black uppercase tracking-widest">No pending approvals</p>
@@ -991,24 +1001,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'history' && (
              <div className="space-y-4">
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">Activity Log (History)</h3>
-                {historyItems.length === 0 ? (
-                  <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
-                     <p className="text-[9px] font-black uppercase tracking-widest">No recent logs</p>
-                  </div>
-                ) : (
-                  historyItems.map(item => (
-                    <div key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3 shadow-sm">
-                       <div className={`p-2 rounded-lg flex-shrink-0 ${item.type === 'payment' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                          {item.type === 'payment' ? <CreditCard size={14}/> : <FileText size={14}/>}
-                       </div>
-                       <div className="flex-1 min-w-0">
-                          <h4 className="font-black text-[11px] text-slate-800">{item.userName}</h4>
-                          <p className="text-[9px] font-bold text-slate-500">{item.action}</p>
-                          <p className="text-[7px] font-black text-slate-300 uppercase mt-1">{item.date}</p>
-                       </div>
+                <div className={isDesktopMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
+                  {historyItems.length === 0 ? (
+                    <div className="bg-white p-10 rounded-[28px] border border-dashed border-slate-200 text-center opacity-40">
+                       <p className="text-[9px] font-black uppercase tracking-widest">No recent logs</p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    historyItems.map(item => (
+                      <div key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3 shadow-sm">
+                         <div className={`p-2 rounded-lg flex-shrink-0 ${item.type === 'payment' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                            {item.type === 'payment' ? <CreditCard size={14}/> : <FileText size={14}/>}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                            <h4 className="font-black text-[11px] text-slate-800">{item.userName}</h4>
+                            <p className="text-[9px] font-bold text-slate-500">{item.action}</p>
+                            <p className="text-[7px] font-black text-slate-300 uppercase mt-1">{item.date}</p>
+                         </div>
+                      </div>
+                    ))
+                  )}
+                </div>
              </div>
           )}
 
@@ -1034,31 +1046,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    </div>
                    
                    {showBizForm && (
-                      <form onSubmit={handleAddBusiness} className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                         <input required placeholder="Business Name" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={bizData.name} onChange={e => setBizData({...bizData, name: e.target.value})} />
-                         <div className="grid grid-cols-2 gap-2">
-                           <input required placeholder="Category" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={bizData.category} onChange={e => setBizData({...bizData, category: e.target.value})} />
-                           <input required placeholder="Contact" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={bizData.contact} onChange={e => setBizData({...bizData, contact: e.target.value})} />
+                      <form onSubmit={handleAddBusiness} className={`animate-in slide-in-from-top-2 duration-300 ${isDesktopMode ? 'grid grid-cols-2 gap-4' : 'space-y-3'}`}>
+                         <input required placeholder="Business Name" className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} value={bizData.name} onChange={e => setBizData({...bizData, name: e.target.value})} />
+                         <div className={`grid grid-cols-2 gap-2 ${isDesktopMode ? 'col-span-2' : ''}`}>
+                           <input required placeholder="Category" className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base' : 'p-3 text-sm'}`} value={bizData.category} onChange={e => setBizData({...bizData, category: e.target.value})} />
+                           <input required placeholder="Contact" className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base' : 'p-3 text-sm'}`} value={bizData.contact} onChange={e => setBizData({...bizData, contact: e.target.value})} />
                          </div>
-                         <input required placeholder="Hours" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none" value={bizData.hours} onChange={e => setBizData({...bizData, hours: e.target.value})} />
-                         <textarea required placeholder="Description..." className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none resize-none" rows={2} value={bizData.description} onChange={e => setBizData({...bizData, description: e.target.value})} />
-                         <button type="submit" className="w-full bg-emerald-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">Register</button>
+                         <input required placeholder="Hours" className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} value={bizData.hours} onChange={e => setBizData({...bizData, hours: e.target.value})} />
+                         <textarea required placeholder="Description..." className={`w-full bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none resize-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} rows={isDesktopMode ? 3 : 2} value={bizData.description} onChange={e => setBizData({...bizData, description: e.target.value})} />
+                         <button type="submit" className={`w-full bg-emerald-600 text-white rounded-xl font-black uppercase tracking-widest shadow-lg ${isDesktopMode ? 'py-4 text-sm col-span-2' : 'py-3 text-xs'}`}>Register</button>
                       </form>
                    )}
 
                    {showBizNoticeForm && (
-                      <form onSubmit={handlePostBizNotice} className="space-y-3 animate-in slide-in-from-top-2 duration-300 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                         <input required placeholder="Announcement Title" className="w-full bg-white border border-amber-100 rounded-xl p-3 text-sm font-bold outline-none" value={bizNoticeData.title} onChange={e => setBizNoticeData({...bizNoticeData, title: e.target.value})} />
-                         <textarea required placeholder="Write message..." className="w-full bg-white border border-amber-100 rounded-xl p-3 text-sm font-bold outline-none resize-none" rows={2} value={bizNoticeData.content} onChange={e => setBizNoticeData({...bizNoticeData, content: e.target.value})} />
-                         <button type="submit" className="w-full bg-amber-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
+                      <form onSubmit={handlePostBizNotice} className={`animate-in slide-in-from-top-2 duration-300 p-4 bg-amber-50 rounded-2xl border border-amber-100 ${isDesktopMode ? 'grid grid-cols-2 gap-4' : 'space-y-3'}`}>
+                         <input required placeholder="Announcement Title" className={`w-full bg-white border border-amber-100 rounded-xl font-bold outline-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} value={bizNoticeData.title} onChange={e => setBizNoticeData({...bizNoticeData, title: e.target.value})} />
+                         <textarea required placeholder="Write message..." className={`w-full bg-white border border-amber-100 rounded-xl font-bold outline-none resize-none ${isDesktopMode ? 'p-4 text-base col-span-2' : 'p-3 text-sm'}`} rows={isDesktopMode ? 4 : 2} value={bizNoticeData.content} onChange={e => setBizNoticeData({...bizNoticeData, content: e.target.value})} />
+                         <button type="submit" className={`w-full bg-amber-600 text-white rounded-xl font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 ${isDesktopMode ? 'py-4 text-sm col-span-2' : 'py-3 text-xs'}`}>
                             <Send size={14} /> Publish
                          </button>
                       </form>
                    )}
                 </div>
 
-                <div className="space-y-6">
-                   <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Approval Requests</h3>
+                <div className={isDesktopMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-6"}>
+                   <h3 className={`text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 ${isDesktopMode ? 'col-span-full' : ''}`}>Approval Requests</h3>
                    {villageBusinesses.filter(b => b.status === 'Pending').length === 0 ? (
                       <div className="p-8 text-center bg-white rounded-[28px] border border-dashed border-slate-200 opacity-40">
                          <p className="text-[9px] font-black uppercase tracking-widest">All clear</p>
@@ -1110,6 +1122,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onUpdate={onUpdateStatus}
         />
       )}
+      </div>
     </div>
   );
 };
