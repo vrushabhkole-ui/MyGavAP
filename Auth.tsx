@@ -739,6 +739,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                       </button>
                     </div>
                   </div>
+
+                  <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+                    Login Now <ArrowRight size={16} />
+                  </button>
+
+                  <div className="flex items-center gap-2 justify-center pt-2">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Demo Login:</span>
+                    <button type="button" onClick={() => {
+                        setRole('user');
+                        onLogin({ id: 'DEMO-RES-1', name: 'Demo Resident', email: 'resident@demo.com', state: 'Maharashtra', district: 'Pune', subDistrict: 'Haveli', village: 'Sukhawadi', role: 'user', status: 'approved', joinedAt: new Date().toLocaleDateString() });
+                    }} className="px-3 py-2 bg-slate-100 text-slate-600 font-black text-[9px] uppercase tracking-widest rounded-lg hover:bg-slate-200 transition-all">Resident</button>
+                    <button type="button" onClick={() => {
+                        setRole('admin');
+                        onLogin({ id: 'DEMO-ADM-1', name: 'Demo Officer', email: 'admin@demo.com', state: 'Maharashtra', district: 'Pune', subDistrict: 'Haveli', village: 'Sukhawadi', role: 'admin', department: ServiceType.GRAMPANCHAYAT, status: 'approved', joinedAt: new Date().toLocaleDateString() });
+                    }} className="px-3 py-2 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-all">Admin</button>
+                  </div>
                 </div>
             ) : (
               <div className="space-y-8">
